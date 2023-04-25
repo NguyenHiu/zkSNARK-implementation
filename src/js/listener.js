@@ -8,27 +8,34 @@ else {
     console.log("false");
 }
 
-const abi = require("./abi.json");
-const smart_contract_address = require("./smart_contract_address.json");
+const abi = require("./_abi.json");
+const smart_contract_address = require("./_smart_contract_address.json");
+
 
 var middleware = new web3.eth.Contract(abi, smart_contract_address);
 
+middleware.events._e_deposit_register_root_change(function(err, res) {
+    console.log("_e_deposit_register_root_change");
+    console.log('keccak256: ');
+    console.log(res);
+})
+
 middleware.events._e_deposit_register(function(err, res) {
-    if (!err) {
-        console.log(res);
-    }
-    else {
-        console.log(err);
-    }
+    console.log("_e_deposit_register");
+    console.log("value: ");
+    console.log(res);
+    console.log("fe-keccak256: ");
+    const theValueYouNeed = web3.utils.soliditySha3(
+        { type: 'address', value: res.returnValues._from },
+        { type: 'address', value: res.returnValues._to },
+        { type: 'uint', value: res.returnValues.amount });
+    console.log(theValueYouNeed);
+    // console.log('value: ' + '[' + res);
 });
 
 middleware.events._e_deposit_existence(function(err, res) {
-    if (!err) {
-        console.log(res);
-    }
-    else {
-        console.log(err);
-    }
+    console.log("_e_deposit_existence");
+    console.log(res);
 });
 // middleware.methods._demo().call({from: '0x9B247e1cfF19e6214cEF3620086C866863211835'}, function(error, result){
 //     console.log(error);
