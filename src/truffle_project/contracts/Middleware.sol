@@ -12,8 +12,8 @@ contract Middleware {
     event _e_deposit_existence(address _from, address _to, uint amount);
     event _e_transfer(address _from, address _to, uint amount);
     event _e_withdraw();
-    event _e_deposit_register_root_change(bytes32 new_root);
-    event _e_deposit_existence_root_change(bytes32 new_root);
+    event _e_deposit_register_root_change(bytes32 new_root, uint n);
+    event _e_deposit_existence_root_change(bytes32 new_root, uint n);
     event _e_process_deposit_tx();
 
     function _demo() pure public returns(uint) {
@@ -53,6 +53,9 @@ contract Middleware {
             tmp = keccak256(abi.encodePacked(tmp, tmp2));
         }
         deposit_register_root.push(tmp);
+
+        if (cnt != deposit_register_count)
+            emit _e_deposit_register_root_change(deposit_register_root[0], deposit_register_count);
         return 0;
     }
 
@@ -72,6 +75,9 @@ contract Middleware {
             tmp = keccak256(abi.encodePacked(tmp, tmp2));
         }
         deposit_existence_root.push(tmp);
+
+        if (cnt != deposit_existence_count)
+            emit _e_deposit_existence_root_change(deposit_existence_root[0], deposit_existence_count);
         return 1;
     }
 

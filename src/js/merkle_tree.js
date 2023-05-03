@@ -39,11 +39,14 @@ class Node {
 }
 
 
-class Merkle_Tree {
+module.exports = class Merkle_Tree {
     root;
     height;
 
-    constructor(no_leaf_node) {
+    constructor(leaf_arr) {
+        var l2 = Math.log2(leaf_arr.length);
+        var length = (int(l2) == l2 ? l2 : int(l2));
+
         this.no_leaf_node = no_leaf_node;
         this.height = Math.log(no_leaf_node) / Math.log(2);
 
@@ -79,11 +82,9 @@ class Merkle_Tree {
             ));
     }
 
-    merke_proof(height) {
-        _height = this.height - height;
+    // merke_proof(height) {
+    //     _height = this.height - height;
 
-    }
+    // }
+
 }
-
-var merkle = new Merkle_Tree(4);
-console.log(merkle);

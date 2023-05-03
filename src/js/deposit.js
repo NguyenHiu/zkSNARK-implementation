@@ -1,5 +1,5 @@
 
-export default class Deposit {
+module.exports = class Deposit {
     _from;
     _to;
     _amount;
@@ -10,4 +10,3 @@ export default class Deposit {
         this._amount = amount;
     }
 }
-
