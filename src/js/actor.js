@@ -13,9 +13,12 @@ else {
 
 var middleware = new web3.eth.Contract(abi, smart_contract_address);
 
-middleware.methods._deposit('0x75f96Ad2e056eF2eFB537c646663f13e82ACaA02', 20).send(
+var address_1 = '0x425bd793F2888444A87a5a9Db29849D472f5BD15';
+var address_2 = '0xA4c349839Dbd94CbCA212C3c01e516a7697198B7';
+
+middleware.methods._deposit(address_1, 20).send(
     {
-        from: '0x75f96Ad2e056eF2eFB537c646663f13e82ACaA02',
+        from: address_1,
         value: 2000000000000000000,
         gas: 200000
 
@@ -23,9 +26,34 @@ middleware.methods._deposit('0x75f96Ad2e056eF2eFB537c646663f13e82ACaA02', 20).se
     , function (err, res) {
         console.log("err: " + err);
         console.log("res: " + res);
+    })
+
+middleware.methods._deposit(address_2, 20).send(
+    {
+        from: address_2,
+        value: 2000000000000000000,
+        gas: 200000
+
     }
-)
-    // .then(require => {
-    //     console.log(require);
-    // })
-    ;
+    , function (err, res) {
+        console.log("err: " + err);
+        console.log("res: " + res);
+    })
+
+middleware.methods._deposit(address_2, 20).send(
+    {
+        from: address_2,
+        value: 2000000000000000000,
+        gas: 200000
+
+    }
+    , function (err, res) {
+        console.log("err: " + err);
+        console.log("res: " + res);
+    })
+
+middleware.methods._process_deposit().send(
+    { from: address_2 }, function (err, res) {
+        console.log("err: " + err);
+        console.log("res: " + res);
+    });
