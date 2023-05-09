@@ -3,7 +3,7 @@
 Open ganache
 
 ### 1.1. Migrate & Compile
-Make sure truffle project connects to the right port (ganache server), and then
+Make sure truffle project connects to the right port (ganache server), and then run this command inside the folder of truffle project.
 ``` bash
 truffle migrate 
 ```
