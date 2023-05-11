@@ -24,7 +24,8 @@ truffle(development)> JSON.stringify(contract.abi)
 truffle(development)> contract.address
 ```
 Copy Abi & Address of smart contract, and paste into _abi.json & _smart_cotract_address.json, respectively. <br>
-**note:** only take the value of the string
+**note:** only take the value of the string  
+**Update**: No need to copy the value of abi.json if you are not change the contract.
 
 ### 1.3. Running
 #### 1.3.1. Listener
