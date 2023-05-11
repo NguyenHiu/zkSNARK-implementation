@@ -22,7 +22,7 @@ var deposit_pending_tx_register = []
 var deposit_pending_tx_existence = []
 var Account_Tree = new MERKLE_TREE_NIL(8);
 
-var address_2 = '0xCc087589201E8E042Deea5dB68707256F90A3a4F';
+var address_2 = '0x669BD1F82711fd41794D865E5c1274232C720752';
 
 // EVENTS
 middleware.events._e_process_deposit(function (err, res) {
@@ -70,7 +70,7 @@ middleware.events._e_process_deposit(function (err, res) {
                 return;
             }
 
-            middleware.methods._verify_deposit_register(proof, height).send({
+            middleware.methods._verify_deposit_register(empty_tree.proof, empty_tree.path, height).send({
                 from: address_2
             });
 
@@ -80,7 +80,9 @@ middleware.events._e_process_deposit(function (err, res) {
                 // Update Account Tree
                 // I already have deposit register tree (from verify deposit-register-root)
                 // So, the work is only adding this tree into account tree 
-
+                Account_Tree.add_sub_tree_according_path(merkle_register.root, empty_tree.path);
+                console.log('after updating: ');
+                Account_Tree._print(Account_Tree.root, 0);
             })
         }
 

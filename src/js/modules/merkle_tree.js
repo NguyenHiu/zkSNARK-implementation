@@ -87,6 +87,11 @@ class MERKLE_TREE_NIL {
     }
 
     add_sub_tree_according_path(subtree_root, path) {
+        if (path.length == 0) {
+            this.root = subtree_root;
+            return;
+        }
+
         var curr_root = this.root;
         for (let i = 0; i < path.length; ++i) {
             if (path[i] == 0)
@@ -94,16 +99,31 @@ class MERKLE_TREE_NIL {
             else
                 curr_root = curr_root.right;
         }
-        console.log('path: ' + path);
-        console.log('curr: ' + curr_root.hash_value);
         if (path[path.length - 1] == 0) {
-            console.log('parent: ' + curr_root.parent.left.hash_value);
-            console.log(subtree_root.hash_value);
             curr_root.parent.left = subtree_root;
         }
         else
             curr_root.parent.right = subtree_root
         subtree_root.parent = curr_root.parent
+        this._update_hash_values_after_add_subtree_path_version(subtree_root, path);
+    }
+
+    _update_hash_values_after_add_subtree_path_version(curr_node, path) {
+        // require: path.length != 0 --> update only if it need updating
+        var tmp_node = curr_node;
+        for (let i = path.length - 1; i >= 0; --i) {
+            if (path[i] == 0) // left 
+                tmp_node.parent.hash_value = web3.utils.soliditySha3(
+                    { type: 'bytes32', value: tmp_node.hash_value },
+                    { type: 'bytes32', value: tmp_node.parent.right.hash_value }
+                )
+            else // right
+                tmp_node.parent.hash_value = web3.utils.soliditySha3(
+                    { type: 'bytes32', value: tmp_node.parent.left.hash_value },
+                    { type: 'bytes32', value: tmp_node.hash_value }
+                )
+            tmp_node = tmp_node.parent;
+        }
     }
 
     _print(root, cnt) {

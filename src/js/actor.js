@@ -13,8 +13,8 @@ else {
 
 var middleware = new web3.eth.Contract(abi, smart_contract_address);
 
-var address_1 = '0x17aBC45Ebf50143159988920802868Eb276922Be';
-var address_2 = '0xCc087589201E8E042Deea5dB68707256F90A3a4F';
+var address_1 = '0x081FaFF25697dE918aE94f25672fAaD45b3274e2';
+var address_2 = '0x669BD1F82711fd41794D865E5c1274232C720752';
 
 // middleware.methods._deposit(address_1, 20).send(
 //     {

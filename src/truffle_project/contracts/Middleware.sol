@@ -44,11 +44,14 @@ contract Middleware {
     }
 
 
-    function _verify_deposit_register(bytes32[] memory proof, uint height) public {
+    function _verify_deposit_register(bytes32[] memory proof, uint[] memory path, uint height) public {
         bytes32 val = hash0[height];
         uint _height = height;
         for (uint i = 0; i < proof.length; ++i) {
-            val = keccak256(abi.encodePacked(val, proof[i]));
+            if (path[i] == 0)
+                val = keccak256(abi.encodePacked(val, proof[i]));
+            else
+                val = keccak256(abi.encodePacked(proof[i], val));
             ++_height;
         }
 
@@ -57,18 +60,22 @@ contract Middleware {
             // Update Account Root
             // Todo: Only process Deposit Register Tree
             //       Update Deposit Register Root & Count
-            // bytes32 new_acc_root = deposit_register_root[0];
-            // for (uint i = 0; i < proof.length; ++i) {
-            //     new_acc_root = keccak256(abi.encodePacked(new_acc_root, proof[i]));
-            // }
-            // account_root = new_acc_root;
-            // // update Count
-            // deposit_register_count -= 2**height;
-            // // update Root: remove first element
-            // for (uint i = 1; i < deposit_register_root.length; ++i) {
-            //     deposit_register_root[i-1] = deposit_register_root[i];
-            // }
-            // deposit_register_root.pop();
+            bytes32 new_acc_root = deposit_register_root[0];
+            for (uint i = 0; i < proof.length; ++i) {
+                if (path[i] == 0)
+                    new_acc_root = keccak256(abi.encodePacked(new_acc_root, proof[i]));
+                else
+                    new_acc_root = keccak256(abi.encodePacked(proof[i], new_acc_root));
+            }
+            account_root = new_acc_root;
+            // update Count
+            deposit_register_count -= 2**height;
+            // update Root: remove first element
+            for (uint i = 1; i < deposit_register_root.length; ++i) {
+                deposit_register_root[i-1] = deposit_register_root[i];
+            }
+            deposit_register_root.pop();
+            emit _e_tracking(account_root);
         }
         else {
             emit _e_tracking(0);
