@@ -11,4 +11,8 @@ const Hash0 = {
     hash9: '0x9d952dab4bf3d73556437c642f74335230419daf1d9f88bb6096e1a8a027bf41',
 }
 
+//      H_0_0_0_0
+//   H_0_0     H_0_0
+// H0    H0  H0   H0
+
 module.exports = Hash0;

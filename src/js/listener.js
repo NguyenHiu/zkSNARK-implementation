@@ -22,7 +22,7 @@ var deposit_pending_tx_register = []
 var deposit_pending_tx_existence = []
 var Account_Tree = new MERKLE_TREE_NIL(8);
 
-var address_2 = '0xA4c349839Dbd94CbCA212C3c01e516a7697198B7';
+var address_2 = '0x669BD1F82711fd41794D865E5c1274232C720752';
 
 // EVENTS
 middleware.events._e_process_deposit(function (err, res) {
@@ -63,10 +63,27 @@ middleware.events._e_process_deposit(function (err, res) {
         // 2.1. (Register) Find sub-tree
         if (deposit_pending_tx_register.length > 0) {
             var height = Math.floor(Math.log2(deposit_pending_tx_register.length));
-            var proof = Account_Tree.find_empty_tree(height);
-            middleware.methods._verify_deposit_register(proof, height).send({
+            var empty_tree = Account_Tree.find_empty_tree(height);
+
+            if (empty_tree.proof == null) {
+                console.log("Account Tree does not have enough space for Deposit Register Tree");
+                return;
+            }
+
+            middleware.methods._verify_deposit_register(empty_tree.proof, empty_tree.path, height).send({
                 from: address_2
             });
+
+            // add
+            middleware.events._e_valid_proof(function (err, res) {
+                console.log("[Valid Proof]");
+                // Update Account Tree
+                // I already have deposit register tree (from verify deposit-register-root)
+                // So, the work is only adding this tree into account tree 
+                Account_Tree.add_sub_tree_according_path(merkle_register.root, empty_tree.path);
+                console.log('after updating: ');
+                Account_Tree._print(Account_Tree.root, 0);
+            })
         }
 
         // // 2.2. (Existence) Add
@@ -79,10 +96,6 @@ middleware.events._e_process_deposit(function (err, res) {
 middleware.events._e_tracking(function (err, res) {
     console.log(res.returnValues._value);
 })
-
-middleware.events._e_valid_proof(function (err, res) {
-    console.log("valid proof");
-});
 
 middleware.events._e_deposit_register(function (err, res) {
     console.log('[Deposit Register]');

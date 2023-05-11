@@ -1,14 +1,6 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 contract Middleware {
-    mapping(address => bool) exists;
-    bytes32[] public deposit_register_root;
-    uint deposit_register_count = 0;
-    bytes32[] deposit_existence_root;
-    uint deposit_existence_count = 0;
-    bytes32 account_root;
-    uint height_acc_tree = 3;
-
     bytes32[10] hash0 = [bytes32(0x3cac317908c699fe873a7f6ee4e8cd63fbe9918b2315c97be91585590168e301),
                         bytes32(0xd6a4144868703d1474cd7c5b4b1697b412eece270b7a4428b750c7458f73d163),
                         bytes32(0x70620458a6db5a8631a8cdc160462b1c0c2535bc813757ffc9374638c3999b0a),
@@ -19,6 +11,13 @@ contract Middleware {
                         bytes32(0x2235dd0e52d5fd51624a4297f90019372475057a149fcf333478b639c6c6a701),
                         bytes32(0x3f196d31b8b97caa45a187e1ecfb14eb76468fb95cee57b1862213861a593377),
                         bytes32(0x9d952dab4bf3d73556437c642f74335230419daf1d9f88bb6096e1a8a027bf41)]; 
+    mapping(address => bool) exists;
+    bytes32[] deposit_register_root;
+    uint deposit_register_count = 0;
+    bytes32[] deposit_existence_root;
+    uint deposit_existence_count = 0;
+    uint height_acc_tree = 3;
+    bytes32 account_root = hash0[height_acc_tree];
 
     event _e_deposit_register(address _from, address _to, uint _amount);
     event _e_deposit_existence(address _from, address _to, uint _amount);
@@ -45,19 +44,43 @@ contract Middleware {
     }
 
 
-    function _verify_deposit_register(bytes32[] memory proof, uint height) public {
+    function _verify_deposit_register(bytes32[] memory proof, uint[] memory path, uint height) public {
         bytes32 val = hash0[height];
         uint _height = height;
         for (uint i = 0; i < proof.length; ++i) {
-            val = keccak256(abi.encodePacked(val, proof[i]));
+            if (path[i] == 0)
+                val = keccak256(abi.encodePacked(val, proof[i]));
+            else
+                val = keccak256(abi.encodePacked(proof[i], val));
             ++_height;
         }
 
         if ((_height == height_acc_tree) && (val == account_root)) {
             emit _e_valid_proof();
+            // Update Account Root
+            // Todo: Only process Deposit Register Tree
+            //       Update Deposit Register Root & Count
+            bytes32 new_acc_root = deposit_register_root[0];
+            for (uint i = 0; i < proof.length; ++i) {
+                if (path[i] == 0)
+                    new_acc_root = keccak256(abi.encodePacked(new_acc_root, proof[i]));
+                else
+                    new_acc_root = keccak256(abi.encodePacked(proof[i], new_acc_root));
+            }
+            account_root = new_acc_root;
+            // update Count
+            deposit_register_count -= 2**height;
+            // update Root: remove first element
+            for (uint i = 1; i < deposit_register_root.length; ++i) {
+                deposit_register_root[i-1] = deposit_register_root[i];
+            }
+            deposit_register_root.pop();
+            emit _e_tracking(account_root);
+        }
+        else {
+            emit _e_tracking(0);
         }
     }
-
 
     function _verify_deposit_existence(bytes32[] memory proof, uint height) public {
         

@@ -45,17 +45,15 @@ class MERKLE_TREE_NIL {
 
     _find_empty_tree(root, height) {
         if (root != null) {
-            if (root.height == height)
-                return this.merke_proof(root);
-
-            var _left = this._find_empty_tree(root.left, height);
-            if (_left != null)
-                return _left;
-            var _right = this._find_empty_tree(root.right, height);
-            return _right;
+            if ((root.height == height) && (root.hash_value == Hash0[`hash${height}`]))
+                return { proof: this.merke_proof(root), path: [] };
+            var left = this._find_empty_tree(root.left, height);
+            if (left.proof != null)
+                return { proof: left.proof, path: ([0]).concat(left.path) };
+            var right = this._find_empty_tree(root.right, height);
+            return { proof: right.proof, path: ([1]).concat(right.path) };
         }
-
-        return null;
+        return { proof: null, path: [] };
     }
 
     merke_proof(root) {
@@ -85,6 +83,46 @@ class MERKLE_TREE_NIL {
         }
         else {
             return root.parent.left;
+        }
+    }
+
+    add_sub_tree_according_path(subtree_root, path) {
+        if (path.length == 0) {
+            this.root = subtree_root;
+            return;
+        }
+
+        var curr_root = this.root;
+        for (let i = 0; i < path.length; ++i) {
+            if (path[i] == 0)
+                curr_root = curr_root.left;
+            else
+                curr_root = curr_root.right;
+        }
+        if (path[path.length - 1] == 0) {
+            curr_root.parent.left = subtree_root;
+        }
+        else
+            curr_root.parent.right = subtree_root
+        subtree_root.parent = curr_root.parent
+        this._update_hash_values_after_add_subtree_path_version(subtree_root, path);
+    }
+
+    _update_hash_values_after_add_subtree_path_version(curr_node, path) {
+        // require: path.length != 0 --> update only if it need updating
+        var tmp_node = curr_node;
+        for (let i = path.length - 1; i >= 0; --i) {
+            if (path[i] == 0) // left 
+                tmp_node.parent.hash_value = web3.utils.soliditySha3(
+                    { type: 'bytes32', value: tmp_node.hash_value },
+                    { type: 'bytes32', value: tmp_node.parent.right.hash_value }
+                )
+            else // right
+                tmp_node.parent.hash_value = web3.utils.soliditySha3(
+                    { type: 'bytes32', value: tmp_node.parent.left.hash_value },
+                    { type: 'bytes32', value: tmp_node.hash_value }
+                )
+            tmp_node = tmp_node.parent;
         }
     }
 
@@ -173,16 +211,15 @@ class MERKLE_TREE {
     _find_empty_tree(root, height) {
         if (root != null) {
             if ((root.height == height) && (root.hash_value == Hash0[`hash${height}`]))
-                return this.merke_proof(root);
-
-            var _left = this._find_empty_tree(root.left, height);
-            if (_left != [])
-                return _left;
-            var _right = this._find_empty_tree(root.right, height);
-            return _right;
+                return { proof: this.merke_proof(root), path: [] };
+            var left = this._find_empty_tree(root.left, height);
+            if (left.proof != null)
+                return { proof: left.proof, path: ([0]).concat(left.path) };
+            var right = this._find_empty_tree(root.right, height);
+            return { proof: right.proof, path: ([1]).concat(right.path) };
         }
 
-        return [];
+        return { proof: null, path: [] };
     }
 
     merke_proof(root) {
