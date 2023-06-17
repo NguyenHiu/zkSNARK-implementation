@@ -1,6 +1,6 @@
-const Hash0 = require("./hash_0");
+import Hash0 from "./hash_0.js";
 
-class NODE {
+export default class NODE {
     left;
     right;
     parent;
@@ -29,5 +29,3 @@ class NODE {
 
     }
 }
-
-module.exports = NODE;
