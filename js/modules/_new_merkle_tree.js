@@ -1,4 +1,4 @@
-import Web3 from "web3";
+// import Web3 from "web3";
 import NODE from "./node.js";
 import DEPOSIT from "./deposit.js";
 import Hash0 from "./hash_0.js";
@@ -7,6 +7,7 @@ const web3 = new Web3();
 class MT {
     constructor(leaves) {
         this.height = Math.log2(leaves.length);
+        console.log("this.height: " + this.height);
         this.leaves_in4 = leaves;
         this.root = this._construct_merkle_tree(leaves);
     }
@@ -44,7 +45,6 @@ class MT {
         let second_ = leaves.slice(half_idx);
         let left = this._construct_merkle_tree(first_);
         let right = this._construct_merkle_tree(second_);
-
         return new NODE(left, right, null,
             web3.utils.soliditySha3(
                 { type: 'bytes32', value: left.hash_value },
@@ -53,6 +53,8 @@ class MT {
     }
 
     has(leaf) {
+        console.log('leaf: ');
+        console.log(leaf);
         for (let i = 0; i < this.leaves_in4.length; ++i) {
             if (this.leaves_in4[i].is(leaf))
                 return i;
@@ -101,6 +103,25 @@ class MT {
             this._print(root.left, cnt + 1);
             this._print(root.right, cnt + 1);
         }
+    }
+
+    _toStr(root, cnt) {
+        if (root == null)
+            return "";
+        let space = '';
+        for (let i = 0; i < cnt - 1; ++i)
+            space += '..|.....'
+        if (cnt != 0)
+            space += '..|--- '
+
+        let res = space + root.hash_value + "\n";
+        res += this._toStr(root.left, cnt + 1);
+        res += this._toStr(root.right, cnt + 1);
+        return res;
+    }
+
+    toStr() {
+        return this._toStr(this.root, 0);
     }
 }
 
@@ -226,4 +247,4 @@ class MERKLE_TREE_NIL extends MT {
     }
 }
 
-export default { MERKLE_TREE, MERKLE_TREE_NIL };
+export { MERKLE_TREE, MERKLE_TREE_NIL };
