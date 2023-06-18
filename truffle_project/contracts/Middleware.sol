@@ -122,6 +122,10 @@ contract Middleware {
             )
         ) {
             account_root = DR_intermediate_acc_root;
+            deposit_register_count -= 4;
+            for (uint i = 1; i < deposit_register_root.length; ++i)
+                deposit_register_root[i - 1] = deposit_register_root[i];
+            deposit_register_root.pop();
             emit _e_valid_proof_register();
         } else emit _e_invalid_proof_register();
     }
@@ -187,6 +191,10 @@ contract Middleware {
                 return;
             }
         }
+        deposit_existence_count -= 4;
+        for (uint i = 1; i < deposit_existence_root.length; ++i)
+            deposit_existence_root[i - 1] = deposit_existence_root[i];
+        deposit_existence_root.pop();
         emit _e_valid_proof_existence();
     }
 

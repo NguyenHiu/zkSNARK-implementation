@@ -81,6 +81,7 @@ middleware.events._e_valid_proof_register(function (err, res) {
     }
     deposit_pending_tx_register = deposit_pending_tx_register.slice(Math.pow(2, Math.floor(Math.log2(deposit_pending_tx_register.length))));
     depositRegisterTx.innerText = deposit_pending_tx_register;
+
     previousAccountRoot.innerText = newestAccountRoot.innerText;
     newestAccountRoot.innerText = Account_Tree.root.hash_value;
     updateListOfAccounts();
