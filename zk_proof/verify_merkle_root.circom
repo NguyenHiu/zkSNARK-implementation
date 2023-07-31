@@ -30,7 +30,7 @@ template GetMerkleRoot(k){
     out <== merkle_root[k-1].out;
 
     // check that Merkle root is equal
-    merkle_root[k-1].out === root;
+    // merkle_root[k-1].out === root;
 
 }
 

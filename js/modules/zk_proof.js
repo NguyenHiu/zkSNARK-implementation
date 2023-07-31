@@ -18,11 +18,11 @@ class Zk_proof {
         }
         var dictstring = JSON.stringify(dict);
         console.log(dictstring);
-        fs.writeFile("input.json", dictstring, (err) => {
+        fs.writeFile("/home/victus-15/Study/Luan-Van/solidity-back-up/zk_proof/verify_merkle_root_js/input.json", dictstring, (err) => {
             console.log("Writing file\n");
             if (err){
                 console.log("Error writing file\n");
-                // console.log(err);
+                console.log(err);
             }
             else {
                 console.log("File written successfully\n");
@@ -31,7 +31,8 @@ class Zk_proof {
 
         // run the shell script
         // console.log(__dirname);
-        child_process.exec('bash ../zk_proof/generate_proof.sh', (err, stdout, stderr) => {
+        // TODO: need code to get directory istead of hard code
+        child_process.exec('bash /home/victus-15/Study/Luan-Van/solidity-back-up/zk_proof/generate_proof.sh', (err, stdout, stderr) => {
             if (err) {
                 console.error(err)
                 process.exit(1)
@@ -40,16 +41,6 @@ class Zk_proof {
                 console.log(`The stderr Buffer from shell: ${stderr.toString()}`)
             }
         })
-    }
-
-    _construct_proof(props) {
-        this.pi_a = this._convert2Hex(props.pi_a);
-        this.pi_b = this._convert2Hex(props.pi_b);
-        this.pi_c = this._convert2Hex(props.pi_c);
-    }
-
-    _construct_public() {
-
     }
     _convert2Hex(arr) {
         let hex = [];
