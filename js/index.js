@@ -31,6 +31,7 @@ let web3 = new Web3(provider);
 import DEPOSIT from "./modules/deposit.js"
 import { MERKLE_TREE, MERKLE_TREE_NIL } from "./modules/_new_merkle_tree.js";
 import NODE from "./modules/node.js";
+import {Zk_proof} from "./modules/zk_proof.cjs";
 
 import abi from "./json/_abi.json" assert { type: "json" };
 import smart_contract_address from "./json/_smart_contract_address.json" assert { type: "json" };
@@ -162,6 +163,9 @@ middleware.events._e_process_deposit_register(function (err, res) {
             DR_intermediate_acc_root = Account_Tree.root.hash_value;
         }
 
+        // create zk-proof
+        let zk_proof = new Zk_proof(res.returnValues.root, DR_Proofs, DR_Path, DR_intermediate_acc_root)
+        // verify using onchain smart contract
         middleware.methods._verify_process_deposit_register(
             DR_Proofs, DR_Path, DR_intermediate_acc_root).send(
                 {

@@ -38,3 +38,8 @@ Make some events with actor
 ``` bash
 node actor.js
 ```
+### Zkp
+- Compile circom
+``` bash
+circom verify_merkle_root.circom --r1cs --wasm --sym
+```
