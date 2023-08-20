@@ -1,6 +1,11 @@
 {
   "dependencies": {
     "circomlib": "^2.0.5",
-    "sha3": "^2.1.4"
+    "circomlibjs": "^0.1.7",
+    "ethers": "^6.7.1",
+    "secp256k1": "^5.0.0",
+    "sha3": "^2.1.4",
+    "snarkjs": "git+https://github.com/adria0/snarkjs.git",
+    "web3": "^4.1.0"
   }
 }

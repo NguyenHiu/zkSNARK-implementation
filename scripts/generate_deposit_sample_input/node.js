@@ -1,17 +1,15 @@
-const HASH = require("./HASH.js");
-
-module.exports = class NODE {
+module.exports = class Node {
     left;
     right;
     parent;
-    hash_value;
+    hashValue;
     height;
 
-    constructor(left = null, right = null, parent = null, hash_value = HASH.hash0) {
+    constructor(_left = null, _right = null, _parent = null, _hashValue = null) {
         this.left = left;
         this.right = right;
         this.parent = parent;
-        this.hash_value = hash_value;
+        this.hashValue = hashValue;
         if (left != null) {
             this.height = left.height + 1;
             left.parent = this;
