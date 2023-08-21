@@ -1,6 +1,4 @@
-const Node = require("./node.js");
-const circomlibjs = require("circomlibjs")
-// const bigInt = require("snarkjs").bigInt;
+const { isEqual } = require("./utils.js");
 
 module.exports =
     class Tree {
@@ -101,6 +99,20 @@ module.exports =
             //         console.log(this.innerNodes[i][j]);
             //     }
             // }
+        }
+
+        _d_checkValidTree(mimc) {
+            for (let i = 0; i < this.leafNodes.length; i += 2) {
+                if (!isEqual(mimc.multiHash([this.leafNodes[i], this.leafNodes[i + 1]]), this.innerNodes[this.depth - 1][Math.floor(i / 2)]))
+                    return false;
+            }
+            for (let i = this.depth - 1; i >= 1; --i) {
+                for (let j = 0; j < this.innerNodes[i].length; j += 2) {
+                    if (!isEqual(mimc.multiHash([this.innerNodes[i][j], this.innerNodes[i][j + 1]]), this.innerNodes[i - 1][Math.floor(j / 2)]))
+                        return false;
+                }
+            }
+            return true;
         }
     }
 

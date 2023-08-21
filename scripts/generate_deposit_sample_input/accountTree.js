@@ -1,7 +1,8 @@
 const Tree = require("./tree.js");
 const Transaction = require("./transaction.js");
 const Account = require("./account.js");
-const {Empty, isEqual} = require("./utils.js");
+const bigInt = require("snarkjs").bigInt;
+const { Empty, isEqual, uint8ArrayToBigInt } = require("./utils.js");
 
 module.exports = class AccountTree extends Tree {
     constructor(_accounts, mimc) {
@@ -9,9 +10,9 @@ module.exports = class AccountTree extends Tree {
         this.accounts = _accounts;
     }
 
-    existEmptySubTreeAt(row) {
+    existEmptySubTreeAt(row) { // 1
         for (let i = 0; i < this.innerNodes[row].length; ++i) {
-            if (isEqual(this.innerNodes[row][i], Empty[this.depth - row]))
+            if (isEqual(this.innerNodes[row][i], Empty[this.depth - row])) // 3 - 1 = 2
                 return i;
         }
     }
@@ -20,7 +21,6 @@ module.exports = class AccountTree extends Tree {
         const proof = [];
         const pos = [];
         let idx = col;
-        console.log("idx: ", idx);
         for (let i = row; i >= 1; --i) {
             if (idx % 2 != 0) {
                 proof.push(this.innerNodes[i][idx - 1]);
@@ -43,7 +43,7 @@ module.exports = class AccountTree extends Tree {
         let col = rootCol;
         for (let i = 0; i < txTree.depth; ++i) {
             for (let j = 0; j < txTree.innerNodes[i].length; ++j) {
-                this.innerNodes[row][col+j] = txTree.innerNodes[i][j];
+                this.innerNodes[row][col + j] = txTree.innerNodes[i][j];
             }
             row += 1
         }
@@ -52,32 +52,45 @@ module.exports = class AccountTree extends Tree {
     rehashingFromInnerNode(_newValue, col, row, proof, path, mimc) {
         let idx = col;
         let newValue = _newValue;
+
         for (let i = row; i >= 1; --i) {
             this.innerNodes[i][idx] = newValue;
-            if (path[row-i] == 0) {
+            if (path[row - i] == 0) {
                 newValue = mimc.multiHash([
-                    proof[row-i],
+                    proof[row - i],
                     newValue
                 ]);
             }
             else {
                 newValue = mimc.multiHash([
                     newValue,
-                    proof[row-i]
+                    proof[row - i]
                 ]);
             }
         }
         this.innerNodes[0][0] = newValue;
     }
 
-    processTxTreeDepositRegister(txTree, mimc) {
-        const row = this.innerNodes.length - txTree.depth;
-        const col = this.existEmptySubTreeAt(row);
+    processTxTreeDepositRegister(depositTree, mimc) {
+        const row = this.depth - depositTree.depth; // 3 - 2 = 1 
+        const col = this.existEmptySubTreeAt(row); // (1)
         const { proof, pos } = this.getProofInnerNode(row, col);
 
-        this.updateSubTree(txTree, col, row);
-        this.rehashingFromInnerNode(txTree.root, col, row, proof, pos, mimc);
+        this.updateSubTree(depositTree, col, row);
+        this.rehashingFromInnerNode(depositTree.root, col, row, proof, pos, mimc);
         this.root = this.innerNodes[0][0];
+
+        const startIdx = col * (Math.pow(2, depositTree.depth));
+        for (let i = 0; i < depositTree.accounts.length; ++i) {
+            this.accounts[startIdx + i] = depositTree.accounts[i];
+            this.leafNodes[startIdx + i] = depositTree.accounts[i].hash;
+        }
+
+        return {
+            newAccountRoot: this.root, // !!!!!! PAY ATTENTION HERE
+            proof: proof,
+            proofPos: pos
+        }
     }
 
     processTxTree(txTree, mimc) {
@@ -143,4 +156,5 @@ module.exports = class AccountTree extends Tree {
                 return this.accounts[i];
         }
     }
+
 }
