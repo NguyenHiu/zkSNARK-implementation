@@ -1,1 +1,0 @@
-Only code is allowed here, the attached files (from build circom, e.g. .zkey files) should be stored at folder build (path: ../build/)
