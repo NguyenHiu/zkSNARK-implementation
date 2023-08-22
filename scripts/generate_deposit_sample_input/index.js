@@ -1,15 +1,12 @@
+const { ZeroPubKeyX, ZeroPubKeyY, ZeroPrvKey, Empty, isEqual, uint8ArrayToBigInt } = require("./utils.js");
+const { randomBytes } = require("ethers");
 const bigInt = require("snarkjs").bigInt;
 const secp256k1 = require("secp256k1");
-const Account = require("./account.js");
-const Transaction = require("./transaction.js");
-const TxTree = require("./txTree.js");
-const DepositTree = require("./depositTree.js");
-const { randomBytes } = require("ethers");
-const circomlibjs = require("circomlibjs");
-const { ZeroPubKeyX, ZeroPubKeyY, ZeroPrvKey, Empty, isEqual, uint8ArrayToBigInt } = require("./utils.js");
-const AccountTree = require("./accountTree.js");
 const fs = require("fs");
-const {stringifyBigInts} = require("./stringifybigint.js");
+const DepositTree = require("./depositTree.js");
+const AccountTree = require("./accountTree.js");
+const circomlibjs = require("circomlibjs");
+const Account = require("./account.js");
 
 function createUser() {
     const prvkey = randomBytes(32);
@@ -21,29 +18,10 @@ function createUser() {
     };
 }
 
-function convert(x) {
-    let s = bigInt(0);
-    for (let i = 0; i < x.length; ++i) {
-        s = bigInt.add(bigInt.mul(s, bigInt(256)), bigInt(x[i]));
-    }
-    return s;
-}
-
 async function run() {
     const mimc = await circomlibjs.buildMimc7();
 
-    // console.log(mimc.F.toString(mimc.multiHash([BigInt(44197704158317907713192630833793885820470319960428659112617039771932448693504), BigInt(44197704158317907713192630833793885820470319960428659112617039771932448693504)])));
-
     const Zero = new Account(0, ZeroPubKeyX, ZeroPubKeyY, 0, 0, mimc);
-    const res = []
-    let x = Zero.hash
-    for (let i = 0; i < 10; ++i) {
-        res.push(mimc.F.toString(x));
-        x = mimc.multiHash([x, x]);
-    }
-    console.log(res);
-
-
     const _Alice = createUser();
     const Alice = new Account(1, _Alice.pubkeyX, _Alice.pubkeyY, 100, 0, mimc);
     const _Bob = createUser();
