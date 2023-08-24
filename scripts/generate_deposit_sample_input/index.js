@@ -1,12 +1,14 @@
 const { ZeroPubKeyX, ZeroPubKeyY, ZeroPrvKey, Empty, isEqual, uint8ArrayToBigInt } = require("./utils.js");
+const circomlibjs = require("circomlibjs");
 const { randomBytes } = require("ethers");
 const bigInt = require("snarkjs").bigInt;
 const secp256k1 = require("secp256k1");
 const fs = require("fs");
 const DepositTree = require("./depositTree.js");
 const AccountTree = require("./accountTree.js");
-const circomlibjs = require("circomlibjs");
 const Account = require("./account.js");
+const TxTree = require("./txTree.js");
+const Transaction = require("./transaction.js");
 
 function createUser() {
     const prvkey = randomBytes(32);
@@ -21,6 +23,7 @@ function createUser() {
 async function run() {
     const mimc = await circomlibjs.buildMimc7();
 
+    /* DEPOSIT REGISTER */
     const Zero = new Account(0, ZeroPubKeyX, ZeroPubKeyY, 0, 0, mimc);
     const _Alice = createUser();
     const Alice = new Account(1, _Alice.pubkeyX, _Alice.pubkeyY, 100, 0, mimc);
@@ -35,10 +38,8 @@ async function run() {
     const accountTree = new AccountTree(new Array(8).fill(Zero), mimc);
     console.log("check: ", accountTree._d_checkValidTree(mimc));
     const oldAccountRoot = accountTree.root;
-    console.log("oldAccountRoot: ", mimc.F.toString(oldAccountRoot));
 
     const depositRegisterProof = accountTree.processTxTreeDepositRegister(depositTree, mimc);
-    console.log(mimc.F.toString(depositRegisterProof.newAccountRoot));
     console.log("check: ", accountTree._d_checkValidTree(mimc));
 
     const input = {
@@ -56,17 +57,31 @@ async function run() {
         "utf-8"
     );
 
-    // // 
+    /* DEPOSIT EXISTENCE */
+    // const depositExistenceTxs = [];
+    // const tx1 = new Transaction(ZeroPubKeyX, ZeroPubKeyY, Alice.pubkeyX, Alice.pubkeyY, 0, 100, 0, 0, 0, mimc);
+    // tx1.signTxHash(ZeroPrvKey);
+    // depositExistenceTxs.push(tx1)
 
-    // const accountTree = new AccountTree(new Array(8).fill(Zero), mimc);
-    // accountTree._d_print();
-    // accountTree.processTxTreeDepositRegister(txTree, mimc);
-    // accountTree._d_print()
+    // const tx2 = new Transaction(ZeroPubKeyX, ZeroPubKeyY, Bob.pubkeyX, Bob.pubkeyY, 1, 100, 0, 0, 0, mimc);
+    // tx2.signTxHash(ZeroPrvKey);
+    // depositExistenceTxs.push(tx2)
 
-    // const prvkey = new Uint8Array(new Array(32).fill(0));
-    // console.log(prvkey);
-    // const pubkey = secp256k1.publicKeyCreate(prvkey, false);
-    // console.log(pubkey);
+    // const tx3 = new Transaction(ZeroPubKeyX, ZeroPubKeyY, Eva.pubkeyX, Eva.pubkeyY, 2, 100, 0, 0, 0, mimc);
+    // tx3.signTxHash(ZeroPrvKey);
+    // depositExistenceTxs.push(tx3)
+       
+    // const tx4 = new Transaction(ZeroPubKeyX, ZeroPubKeyY, Eva.pubkeyX, Eva.pubkeyY, 2, 100, 0, 0, 0, mimc);
+    // tx4.signTxHash(ZeroPrvKey);
+    // depositExistenceTxs.push(tx4)
+    
+    // const depositExistenceTree = new TxTree(depositExistenceTxs, mimc);
+    // console.log(depositExistenceTree._d_checkValidTree(mimc));
+    
+    // const proof = accountTree.processTxTree(depositExistenceTree, mimc);
+    // console.log(depositExistenceTree._d_checkValidTree(mimc));
+    // console.log(proof);
+
 }
 
 run();

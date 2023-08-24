@@ -1,5 +1,3 @@
-// const { ethers } = require("ethers");
-// const { concat, toUtf8Bytes } = require("ethers/lib/utils");
 const secp256k1 = require("secp256k1");
 
 module.exports = class Transaction {
@@ -28,9 +26,12 @@ module.exports = class Transaction {
     hashTx(mimc) {
         // hash unsigned transaction
         const txHash = mimc.multiHash([
-            this.fromX, this.fromY,
-            this.toX, this.toY,
-            this.nonce, this.amount
+            mimc.F.toString(this.fromX),
+            mimc.F.toString(this.fromY),
+            mimc.F.toString(this.toX),
+            mimc.F.toString(this.toY),
+            mimc.F.toString(this.nonce),
+            mimc.F.toString(this.amount),
         ]);
         return txHash;
     }
@@ -49,9 +50,11 @@ module.exports = class Transaction {
         signature.set(this.s, this.r.length);
 
         // pubkey
-        const pubkey = new Uint8Array(this.fromX.length + this.fromY.length);
-        pubkey.set(this.fromX);
-        pubkey.set(this.fromY, this.fromX.length);
+        const pubkey = new Uint8Array(this.fromX.length + this.fromY.length + 1);
+        pubkey.set(new Uint8Array(["4"]))
+        pubkey.set(this.fromX, 1);
+        pubkey.set(this.fromY, this.fromX.length + 1);
+        // console.log("pubkey: ", pubkey);
 
         return secp256k1.ecdsaVerify(signature, this.hash, pubkey);
     }

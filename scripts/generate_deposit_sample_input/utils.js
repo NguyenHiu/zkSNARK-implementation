@@ -93,21 +93,198 @@ exports.Empty = [
     ])
 ];
 
-exports.isEqual = function(x, y) {
+exports.isEqual = function (x, y) {
     if (x.length != y.length)
         return false;
     return x.every((value, index) => value == y[index]);
 };
 
-function uint8ArrayToBigInt(arr, mimc) {
-    if (Array.isArray(arr)) {
-        return arr.map(x => uint8ArrayToBigInt(x, mimc));
+function bigIntToUint8Array32(num) {
+    const each = bigInt(1).shl(8);
+    const arr = [];
+    while (num.greater(bigInt(0))) {
+        arr.push(parseInt(num.mod(each)));
+        num = num.shr(8);
     }
-    return mimc.F.toString(arr);
-    // let result = bigInt(0);
-    // for (let i = 0; i < arr.length; ++i) {
-    //     result = bigInt.add(bigInt.mul(result, bigInt(256)), bigInt(arr[i]))
+    while (arr.length < 32)
+        arr.push(0); 
+    return new Uint8Array(arr);
+}
+exports.bigIntToUint8Array32 = (num) => bigIntToUint8Array32(num);
+
+
+function bigIntToUint8Array(num) {
+    const each = bigInt(1).shl(8);
+    const arr = [];
+    while (num.greater(bigInt(0))) {
+        arr.push(parseInt(num.mod(each)));
+        num = num.shr(8);
+    }
+    const _arr = []
+    for (let i = arr.length-1; i >= 0; --i)
+        _arr.push(arr[i])
+    return new Uint8Array(_arr);
+}
+exports.bigIntToUint8Array = (num) => bigIntToUint8Array(num);
+
+function uint8ArrayToBigInt(arr) {
+    // if (Array.isArray(arr)) {
+    //     return arr.map(x => uint8ArrayToBigInt(x, mimc));
     // }
-    // return result.toString();
+    // return mimc.F.toString(arr);
+    let result = bigInt(0);
+    for (let i = 0; i < arr.length; ++i) {
+    // for (let i = arr.length-1; i >= 0; --i) {
+        result = bigInt.add(bigInt.mul(result, bigInt(256)), bigInt(arr[i]))
+    }
+    return result;
 };
 exports.uint8ArrayToBigInt = (arr, mimc) => uint8ArrayToBigInt(arr, mimc);
+
+function parseSignatureFromUint8Array(_signature) {
+    return {
+        r: _signature.slice(0, 32),
+        s: _signature.slice(32)
+    }
+}
+exports.parseSignatureFromUint8Array = (_signature) => parseSignatureFromUint8Array(_signature);
+
+function uint8ArrayTo64BitsArray(uint8array) {
+    let num = bigInt(0);
+    for (let i = 0; i < uint8array.length; ++i) {
+        num = bigInt.add(bigInt.mul(num, bigInt(256)), bigInt(uint8array[i]))
+    }
+    
+    return bigIntNumTo64BitsArray(num);
+}
+exports.uint8ArrayTo64BitsArray = (uint8array) => uint8ArrayTo64BitsArray(uint8array);
+
+function bigIntNumTo64BitsArray(num) {
+    const res = [];
+    const each = bigInt(1).shl(64);
+    while (num.greater(bigInt(0))) {
+        res.push(num.mod(each).toString());
+        num = num.shr(64);
+    }
+    return res;
+}
+exports.bigIntNumTo64BitsArray = (num) => bigIntNumTo64BitsArray(num);
+
+exports.getDepositExistenceInputCircuit = function (processState) {
+    /* 
+    processState {
+        currentAccountRoot: currentAccountRoot,
+        txRree: txTree,
+        txProofs: txExistenceProofs,
+        txProofPos: txExistenceProofPos,
+        txDetails: txDetails
+    }
+    */
+
+
+    const txTree = processState.txTree;
+    const noTx = txTree.txs.length;
+
+    const txExistenceProof = new Array(noTx);
+    const txExistenceProofPos = new Array(noTx);
+    const senderExistenceProof = new Array(noTx);
+    const senderExistenceProofPos = new Array(noTx);
+    const senderPubkeyX = new Array(noTx);
+    const senderPubkeyY = new Array(noTx);
+    const senderBalance = new Array(noTx);
+    const senderNonce = new Array(noTx);
+    const receiverExistenceProof = new Array(noTx);
+    const receiverExistenceProofPos = new Array(noTx);
+    const receiverPubkeyX = new Array(noTx);
+    const receiverPubkeyY = new Array(noTx);
+    const receiverBalance = new Array(noTx);
+    const receiverNonce = new Array(noTx);
+    const r = new Array(noTx);
+    const s = new Array(noTx);
+    const amount = new Array(noTx);
+    const intermediateRoots = new Array(2 * noTx + 1);
+
+    intermediateRoots[0] = processState.currentAccountRoot;
+    for (let i = 0; i < txTree.txs.length; ++i) {
+        txExistenceProof[i] = processState.txProofs[i];
+        txExistenceProofPos[i] = processState.txProofPos[i];
+        senderPubkeyX[i] = processState.txTree.txs[i].fromX;
+        senderPubkeyY[i] = processState.txTree.txs[i].fromY;
+        senderBalance[i] = processState.txDetails[i].senderBalance;
+        senderNonce[i] = processState.txDetails[i].senderNonce;
+        senderExistenceProof[i] = processState.txDetails[i].senderProof;
+        senderExistenceProofPos[i] = processState.txDetails[i].senderProofPos;
+        receiverPubkeyX[i] = processState.txTree.txs[i].toX;
+        receiverPubkeyY[i] = processState.txTree.txs[i].toY;
+        receiverBalance[i] = processState.txDetails[i].receiverBalance;
+        receiverNonce[i] = processState.txDetails[i].receiverNonce;
+        receiverExistenceProof[i] = processState.txDetails[i].receiverProof;
+        receiverExistenceProofPos[i] = processState.txDetails[i].receiverProofPos;
+        r[i] = processState.txTree.txs[i].r;
+        s[i] = processState.txTree.txs[i].s;
+        amount[i] = processState.txTree.txs[i].amount;
+        intermediateRoots[1 + 2 * i] = processState.txDetails[i].senderIntermediateRoot,
+            intermediateRoots[2 + 2 * i] = processState.txDetails[i].receiverIntermediateRoot
+    }
+
+    return {
+        txRoot: txTree.root,
+
+        // prove transactions in txTree are existed
+        txExistenceProof: txExistenceProof,
+        txExistenceProofPos: txExistenceProofPos,
+
+        // prove senders are existed
+        senderExistenceProof: senderExistenceProof,
+        senderExistenceProofPos: senderExistenceProofPos,
+        senderPubkeyX: senderPubkeyX,
+        senderPubkeyY: senderPubkeyY,
+        senderBalance: senderBalance,
+        senderNonce: senderNonce,
+        receiverExistenceProof: receiverExistenceProof,
+        receiverExistenceProofPos: receiverExistenceProofPos,
+        receiverPubkeyX: receiverPubkeyX,
+        receiverPubkeyY: receiverPubkeyY,
+        receiverBalance: receiverBalance,
+        receiverNonce: receiverNonce,
+
+        // prove transactions is valid (signature)
+        r: r,
+        s: s,
+
+        // provide information to calculate new state
+        amount: amount,
+
+        // provide all the intermediate roots
+        intermediateRoots: intermediateRoots
+    }
+
+
+    /* 
+    
+    return {
+        txTreeRoot,
+        proofs --> transactions are existed in txTree: 
+            proof,
+            proofPos,
+
+        proofs --> senders and receivers in transactions are existed in account tree: 
+            proof, 
+            proofPos,
+            public key of sender and receiver,
+            signature to prove the transaction is valid,
+            balance before processing tx of senders and receivers,
+            nonce before processing tx of senders and receivers
+
+
+
+        amount of each tx
+        
+        all of the intermediate root when processing
+
+    }
+
+    */
+
+
+};

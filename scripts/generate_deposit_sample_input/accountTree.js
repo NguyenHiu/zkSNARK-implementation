@@ -94,6 +94,7 @@ module.exports = class AccountTree extends Tree {
     }
 
     processTxTree(txTree, mimc) {
+        const currentAccountRoot = this.root;
         const txExistenceProofs = [];
         const txExistenceProofPos = [];
         const txDetails = [];
@@ -105,6 +106,8 @@ module.exports = class AccountTree extends Tree {
         }
 
         return {
+            currentAccountRoot: currentAccountRoot,
+            txRree: txTree,
             txProofs: txExistenceProofs,
             txProofPos: txExistenceProofPos,
             txDetails: txDetails
@@ -112,10 +115,12 @@ module.exports = class AccountTree extends Tree {
     }
 
     processTx(tx, mimc) {
-        tx.checkSignature();
+        console.log("check signature: ", tx.checkSignature());
 
         const sender = this.findAccountByPubkey(tx.fromX, tx.fromY);
-        const { s_existenceProof, s_existenceProofPos } = this.getProof(sender.index);
+        const s_proof = this.getProof(sender.index);
+        const s_existenceProof = s_proof.proof; 
+        const s_existenceProofPos = s_proof.proofPos;
         const s_nonce = sender.nonce;
         const s_balance = sender.balance;
 
@@ -127,7 +132,9 @@ module.exports = class AccountTree extends Tree {
         const s_intermediateRoot = this.root;
 
         const receiver = this.findAccountByPubkey(tx.toX, tx.toY);
-        const { r_existenceProof, r_existenceProofPos } = this.getProof(receiver.index);
+        const r_proof = this.getProof(receiver.index);
+        const r_existenceProof = r_proof.proof; 
+        const r_existenceProofPos = r_proof.proofPos;
         const r_nonce = receiver.nonce;
         const r_balance = receiver.balance;
 
@@ -142,10 +149,15 @@ module.exports = class AccountTree extends Tree {
         return {
             senderProof: s_existenceProof,
             senderProofPos: s_existenceProofPos,
-            sIntermediateRoot: s_intermediateRoot,
+            senderIntermediateRoot: s_intermediateRoot,
+            senderNonce: s_nonce,
+            senderBalance: s_balance,
+
             receiverProof: r_existenceProof,
             receiverProofPos: r_existenceProofPos,
-            rIntermediateRoot: r_intermediateRoot,
+            receiverIntermediateRoot: r_intermediateRoot,
+            receiverNonce: r_nonce,
+            receiverBalance: r_balance,
         };
     }
 
