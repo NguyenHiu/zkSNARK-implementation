@@ -1,4 +1,21 @@
 const secp256k1 = require("secp256k1");
+const {uint8ArrayToHex} = require("./utils.js");
+
+
+
+function hex2Uint8Array(hex, l = 32) {
+    console.log("length: ", hex.length );
+    const arr = [];
+    if ((hex.length > 2) && (hex.slice(0, 2) == "0x")) {
+        hex = hex.slice(2);
+    }
+    hex.match(/.{1,2}/g).map(x => arr.push(parseInt(x, 16)));
+    while (arr.length < l)
+        arr.push(0);
+    return new Uint8Array(arr);
+}
+
+
 
 module.exports = class Transaction {
     constructor(
@@ -8,7 +25,7 @@ module.exports = class Transaction {
     ) {
         // transaction infromation
         this.fromX = _fromX;
-        this.fromY = _fromY;
+        this.fromY = _fromY; 
         this.toX = _toX;
         this.toY = _toY;
         this.nonce = _nonce;
@@ -36,11 +53,11 @@ module.exports = class Transaction {
         return txHash;
     }
 
-    signTxHash(prvkey) {
-        const _s = secp256k1.ecdsaSign(this.hash, prvkey).signature;
-        this.r = _s.slice(0, 32);
-        this.s = _s.slice(32);
-        this.v = -1; // do not touch right now .-.
+    signTxHash(prvkey, mimc) {
+        const _s = secp256k1.ecdsaSign(hex2Uint8Array(mimc.F.toString(this.hash, 16)), prvkey);
+        this.r = _s.signature.slice(0, 32);
+        this.s = _s.signature.slice(32);
+        this.v = _s.recid;
     }
 
     checkSignature() {

@@ -1,13 +1,9 @@
 const buildMimc7 = require("circomlibjs").buildMimc7;
-const { randomBytes, toUtf8Bytes } = require("ethers");
+const { randomBytes } = require("ethers");
 const secp256k1 = require("secp256k1")
-const fs = require("fs");
-const { bigIntNumTo64BitsArray, bigIntToUint8Array, bigIntToUint8Array32, uint8ArrayToBigInt, ZeroPrvKey, ZeroPubKeyX, ZeroPubKeyY } = require("./utils.js")
+const { hexToUint8Array, uint8ArrayToHex } = require("./utils.js")
 const bigInt = require("snarkjs").bigInt;
-const Account = require("./account.js");
 const Transaction = require("./transaction.js")
-const { ethers } = require("ethers");
-const { log } = require("console");
 
 function createUser() {
     const prvkey = randomBytes(32);
@@ -22,53 +18,35 @@ function createUser() {
 
 async function run() {
     const mimc = await buildMimc7();
-    
-    // const pp = randomBytes(32);
-    // const prevkey = uint8ArrayToBigInt(pp).toString(16);
-    // const pubkey = secp256k1.publicKeyCreate(pp, false);
-    // console.log(pubkey);
-    // const _pub = uint8ArrayToBigInt(pubkey).toString(16);
-    // console.log("secp256k1:\npubkey: 0x0", _pub);
-    
-    // const wallet = new ethers.Wallet(prevkey)
-    // const pubk = wallet.signingKey.publicKey;
-    // console.log("ethers: \npubkey: ", pubk);
+    console.log(uint8ArrayToHex(mimc.multiHash([hexToUint8Array("0x0")])));
+    // const toX = "0x6101c2fc15c6564457956fed37b9bd81b529cc107eb2ee2a3c0b23e8f64d2772";
+    // const toY = "0x1ecb7327a94dc7af00fd40081eeb0c818983d8cf0e448b21c6fd8fc902f710ef"; 
+    // const tx = new Transaction(
+    //     hexToUint8Array("0x0"),
+    //     hexToUint8Array("0x0"),
+    //     hexToUint8Array(toX),
+    //     hexToUint8Array(toY),
+    //     hexToUint8Array("0x0"),
+    //     hexToUint8Array("0x0"),
+    //     0, 0, 0, mimc
+    // )
 
-    // const msgArr = randomBytes(32);
-    // const msgHex = uint8ArrayToBigInt(msgArr).toString(16);
-    // console.log("msghash: ", msgHex);
+    // console.log("tx.hash: \n", uint8ArrayToHex(tx.hash));
 
-    // const secpSign = secp256k1.ecdsaSign(msgArr, pp);
-    // const _pk = bigIntToUint8Array(bigInt(pubk, 16));
-    // // console.log(_pk);
-    // console.log(secp256k1.ecdsaVerify(secpSign.signature, msgArr, _pk));
-    // const etheSign = await wallet.signMessage(msgHex);
-    // console.log("secp256k1:\nsignature: ", uint8ArrayToBigInt(secpSign).toString(16));
-    // console.log("ethers: \nsignature: ", etheSign);
-    
-    const msghash = mimc.multiHash([1, 2]);
-    const A = createUser();
-    const signature = secp256k1.ecdsaSign(msghash, A.prvkey).signature;
-    console.log("signature: ", signature);
-
-    const r = uint8ArrayToBigInt(signature.slice(0, 32));
-    const s = uint8ArrayToBigInt(signature.slice(32));
-    const px = uint8ArrayToBigInt(A.pubkeyX);
-    const py = uint8ArrayToBigInt(A.pubkeyY);
-    const _msghash = uint8ArrayToBigInt(msghash);
-
-    const input = {
-        "r": bigIntNumTo64BitsArray(r),
-        "s": bigIntNumTo64BitsArray(s),
-        "msghash": bigIntNumTo64BitsArray(_msghash),
-        "pubkey": [
-            bigIntNumTo64BitsArray(px), bigIntNumTo64BitsArray(py)
-        ]
-    }
-    console.log("input: ");
-    console.log(JSON.stringify(input));
-
-    fs.writeFileSync("../../build/inputs/test.json", JSON.stringify(input), "utf-8");
+    // const Alice = createUser();
+    // const tx = new Transaction(Alice.pubkeyX, Alice.pubkeyY, Alice.pubkeyX, Alice.pubkeyY, 0, 100, 0, 0, 0, mimc);
+    // tx.signTxHash(Alice.prvkey);
+    // const input = {
+    //     "r": bigIntNumTo64BitsArray(uint8ArrayToBigInt(tx.r)),
+    //     "s": bigIntNumTo64BitsArray(uint8ArrayToBigInt(tx.s)),
+    //     "msghash": bigIntNumTo64BitsArray(uint8ArrayToBigInt(tx.hash)),
+    //     "pubkey": [
+    //         bigIntNumTo64BitsArray(uint8ArrayToBigInt(tx.fromX)),
+    //         bigIntNumTo64BitsArray(uint8ArrayToBigInt(tx.fromY)),
+    //     ]
+    // }
+    // console.log("intput: ");
+    // console.log(JSON.stringify(input));
 }
 
 run();

@@ -1,4 +1,3 @@
-const { ZeroPubKeyX, ZeroPubKeyY, ZeroPrvKey, Empty, isEqual, uint8ArrayToBigInt } = require("./utils.js");
 const circomlibjs = require("circomlibjs");
 const { randomBytes } = require("ethers");
 const bigInt = require("snarkjs").bigInt;
@@ -24,38 +23,40 @@ async function run() {
     const mimc = await circomlibjs.buildMimc7();
 
     /* DEPOSIT REGISTER */
-    const Zero = new Account(0, ZeroPubKeyX, ZeroPubKeyY, 0, 0, mimc);
-    const _Alice = createUser();
-    const Alice = new Account(1, _Alice.pubkeyX, _Alice.pubkeyY, 100, 0, mimc);
-    const _Bob = createUser();
-    const Bob = new Account(2, _Bob.pubkeyX, _Bob.pubkeyY, 100, 0, mimc);
-    const _Eva = createUser();
-    const Eva = new Account(3, _Eva.pubkeyX, _Eva.pubkeyY, 100, 0, mimc);
-    const accounts = [Zero, Alice, Bob, Eva];
+    // const Zero = new Account(0, ZeroPubKeyX, ZeroPubKeyY, 0, 0, mimc);
+    // const _Alice = createUser();
+    // const Alice = new Account(1, _Alice.pubkeyX, _Alice.pubkeyY, 100, 0, mimc);
+    // const _Bob = createUser();
+    // const Bob = new Account(2, _Bob.pubkeyX, _Bob.pubkeyY, 100, 0, mimc);
+    // const _Eva = createUser();
+    // const Eva = new Account(3, _Eva.pubkeyX, _Eva.pubkeyY, 100, 0, mimc);
+    // const accounts = [Zero, Alice, Bob, Eva];
 
-    const depositTree = new DepositTree(accounts, mimc);
+    // const depositTree = new DepositTree(accounts, mimc);
 
-    const accountTree = new AccountTree(new Array(8).fill(Zero), mimc);
-    console.log("check: ", accountTree._d_checkValidTree(mimc));
-    const oldAccountRoot = accountTree.root;
+    // const accountTree = new AccountTree(new Array(8).fill(Zero), mimc);
+    // console.log("check: ", accountTree._d_checkValidTree(mimc));
+    // const oldAccountRoot = accountTree.root;
 
-    const depositRegisterProof = accountTree.processTxTreeDepositRegister(depositTree, mimc);
-    console.log("check: ", accountTree._d_checkValidTree(mimc));
+    // const depositRegisterProof = accountTree.processTxTreeDepositRegister(depositTree, mimc);
+    // console.log("check: ", accountTree._d_checkValidTree(mimc));
 
-    const input = {
-        "depositRegisterOnchainRoot": mimc.F.toString(depositTree.root),
-        "depositRegisterRoot": mimc.F.toString(depositTree.root),
-        "oldAccountRoot": mimc.F.toString(oldAccountRoot),
-        "proof": uint8ArrayToBigInt(depositRegisterProof.proof, mimc),
-        "proofPos": depositRegisterProof.proofPos,
-        "newAccountRoot": mimc.F.toString(depositRegisterProof.newAccountRoot),
-    }
+    // const input = {
+    //     "depositRegisterOnchainRoot": mimc.F.toString(depositTree.root),
+    //     "depositRegisterRoot": mimc.F.toString(depositTree.root),
+    //     "oldAccountRoot": mimc.F.toString(oldAccountRoot),
+    //     "proof": uint8ArrayToBigInt(depositRegisterProof.proof, mimc),
+    //     "proofPos": depositRegisterProof.proofPos,
+    //     "newAccountRoot": mimc.F.toString(depositRegisterProof.newAccountRoot),
+    // }
 
-    fs.writeFileSync(
-        "../../build/inputs/1_test_deposit_register_proof.json",
-        JSON.stringify(input),
-        "utf-8"
-    );
+    // fs.writeFileSync(
+    //     "../../build/inputs/1_test_deposit_register_proof.json",
+    //     JSON.stringify(input),
+    //     "utf-8"
+    // );
+
+
 
     /* DEPOSIT EXISTENCE */
     // const depositExistenceTxs = [];

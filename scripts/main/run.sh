@@ -1,0 +1,1 @@
+ganache-cli --account_keys_path "../../build/ganacheAccounts/accounts.json" --defaultBalanceEther 10000

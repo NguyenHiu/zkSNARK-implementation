@@ -99,20 +99,6 @@ exports.isEqual = function (x, y) {
     return x.every((value, index) => value == y[index]);
 };
 
-function bigIntToUint8Array32(num) {
-    const each = bigInt(1).shl(8);
-    const arr = [];
-    while (num.greater(bigInt(0))) {
-        arr.push(parseInt(num.mod(each)));
-        num = num.shr(8);
-    }
-    while (arr.length < 32)
-        arr.push(0); 
-    return new Uint8Array(arr);
-}
-exports.bigIntToUint8Array32 = (num) => bigIntToUint8Array32(num);
-
-
 function bigIntToUint8Array(num) {
     const each = bigInt(1).shl(8);
     const arr = [];
@@ -121,54 +107,17 @@ function bigIntToUint8Array(num) {
         num = num.shr(8);
     }
     const _arr = []
-    for (let i = arr.length-1; i >= 0; --i)
+    for (let i = arr.length - 1; i >= 0; --i)
         _arr.push(arr[i])
     return new Uint8Array(_arr);
+    // return new Uint8Array(arr);
 }
 exports.bigIntToUint8Array = (num) => bigIntToUint8Array(num);
 
-function uint8ArrayToBigInt(arr) {
-    // if (Array.isArray(arr)) {
-    //     return arr.map(x => uint8ArrayToBigInt(x, mimc));
-    // }
-    // return mimc.F.toString(arr);
-    let result = bigInt(0);
-    for (let i = 0; i < arr.length; ++i) {
-    // for (let i = arr.length-1; i >= 0; --i) {
-        result = bigInt.add(bigInt.mul(result, bigInt(256)), bigInt(arr[i]))
-    }
-    return result;
-};
-exports.uint8ArrayToBigInt = (arr, mimc) => uint8ArrayToBigInt(arr, mimc);
-
-function parseSignatureFromUint8Array(_signature) {
-    return {
-        r: _signature.slice(0, 32),
-        s: _signature.slice(32)
-    }
-}
-exports.parseSignatureFromUint8Array = (_signature) => parseSignatureFromUint8Array(_signature);
-
 function uint8ArrayTo64BitsArray(uint8array) {
-    let num = bigInt(0);
-    for (let i = 0; i < uint8array.length; ++i) {
-        num = bigInt.add(bigInt.mul(num, bigInt(256)), bigInt(uint8array[i]))
-    }
-    
-    return bigIntNumTo64BitsArray(num);
+    return bigIntNumTo64BitsArray(uint8ArrayToBigInt(uint8array));
 }
 exports.uint8ArrayTo64BitsArray = (uint8array) => uint8ArrayTo64BitsArray(uint8array);
-
-function bigIntNumTo64BitsArray(num) {
-    const res = [];
-    const each = bigInt(1).shl(64);
-    while (num.greater(bigInt(0))) {
-        res.push(num.mod(each).toString());
-        num = num.shr(64);
-    }
-    return res;
-}
-exports.bigIntNumTo64BitsArray = (num) => bigIntNumTo64BitsArray(num);
 
 exports.getDepositExistenceInputCircuit = function (processState) {
     /* 

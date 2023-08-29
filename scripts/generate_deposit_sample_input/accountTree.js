@@ -2,7 +2,7 @@ const Tree = require("./tree.js");
 const Transaction = require("./transaction.js");
 const Account = require("./account.js");
 const bigInt = require("snarkjs").bigInt;
-const { Empty, isEqual, uint8ArrayToBigInt } = require("./utils.js");
+const { Empty, isEqual } = require("./utils.js");
 
 module.exports = class AccountTree extends Tree {
     constructor(_accounts, mimc) {
