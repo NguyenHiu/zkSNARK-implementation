@@ -1,0 +1,28 @@
+doctype html
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title Document
+    body 
+        h1 main view 
+        h2 welcome, 
+        p your address: #{address}
+        p your private key: #{privateKey}
+        h3 Deposit 
+        form(action="/main", method="POST")
+            div 
+                label(for="toPublicKey") To Public Key:
+                input(name="toPublicKey")
+            br
+            div 
+                label(from="amount") Amount: 
+                input(name="amount")
+            br
+            button(type="submit") Submit Deposit Request
+        if coordinator === address
+            h1 You are Coordinator! You can update state!
+            form(action="/main_process_deposit_register", method="POST")
+                button(type="submit") Process Deposit Register
+        else
+            h1 You are not Coordinator!

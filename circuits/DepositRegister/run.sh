@@ -32,14 +32,14 @@ node "$BUILD_DIR"/"$CIRCUIT_NAME"_js/generate_witness.js "$BUILD_DIR"/"$CIRCUIT_
 # echo "** Exporting vkey"
 # snarkjs zkey export verificationkey "$BUILD_DIR"/"$CIRCUIT_NAME"_1.zkey "$BUILD_DIR"/verification_key.json
 
-echo "****GENERATING PROOF FOR SAMPLE INPUT****"
-snarkjs groth16 prove "$BUILD_DIR"/"$CIRCUIT_NAME"_1.zkey "$BUILD_DIR"/witness.wtns "$BUILD_DIR"/proof.json "$BUILD_DIR"/public.json
+# echo "****GENERATING PROOF FOR SAMPLE INPUT****"
+# snarkjs groth16 prove "$BUILD_DIR"/"$CIRCUIT_NAME"_1.zkey "$BUILD_DIR"/witness.wtns "$BUILD_DIR"/proof.json "$BUILD_DIR"/public.json
 
-echo "****VERIFYING PROOF FOR SAMPLE INPUT****"
-snarkjs groth16 verify "$BUILD_DIR"/verification_key.json "$BUILD_DIR"/public.json "$BUILD_DIR"/proof.json
+# echo "****VERIFYING PROOF FOR SAMPLE INPUT****"
+# snarkjs groth16 verify "$BUILD_DIR"/verification_key.json "$BUILD_DIR"/public.json "$BUILD_DIR"/proof.json
 
-# generate smart contract
-mkdir -p "$BUILD_DIR"/smart_contract
-snarkjs zkey export solidityverifier "$BUILD_DIR"/"$CIRCUIT_NAME"_1.zkey "$BUILD_DIR"/smart_contract/verifier.sol
+# # generate smart contract
+# mkdir -p "$BUILD_DIR"/smart_contract
+# snarkjs zkey export solidityverifier "$BUILD_DIR"/"$CIRCUIT_NAME"_1.zkey "$BUILD_DIR"/smart_contract/verifier.sol
 
-snarkjs zkey export soliditycalldata "$BUILD_DIR"/public.json "$BUILD_DIR"/proof.json
+# snarkjs zkey export soliditycalldata "$BUILD_DIR"/public.json "$BUILD_DIR"/proof.json

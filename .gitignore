@@ -2,4 +2,4 @@ node_modules
 src/js/_smart_contract_address.json
 src/truffle_project/build/contracts
 takenote.md
-build/circuits/verify
+build/circuits

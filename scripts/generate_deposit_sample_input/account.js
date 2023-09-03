@@ -15,9 +15,10 @@ module.exports = class Account {
 
     hashAccount(mimc) {
         const accountHash = mimc.multiHash([
-            this.pubkeyX, this.pubkeyY,
-            Uint8Array.from(this.balance),
-            Uint8Array.from(this.nonce)
+            mimc.F.toString(this.pubkeyX), 
+            mimc.F.toString(this.pubkeyY),
+            mimc.F.toString(this.balance),
+            mimc.F.toString(this.nonce)
         ]);
         return accountHash;
     }

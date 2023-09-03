@@ -1,7 +1,7 @@
 pragma circom 2.0.2;
 
-include "../node_modules/circomlib/circuits/comparators.circom";
-include "../node_modules/circomlib/circuits/multiplexer.circom";
+include "../../node_modules/circomlib/circuits/comparators.circom";
+include "../../node_modules/circomlib/circuits/multiplexer.circom";
 
 include "bigint.circom";
 include "secp256k1.circom";
@@ -223,8 +223,6 @@ template ECDSAVerifyNoPubkeyCheck(n, k) {
     res_comp.in[0] <== k;
     res_comp.in[1] <== num_equal[k - 2];
     result <== res_comp.out;
-    result === 1;
-    log("result: ", result);
 }
 
 // TODO: implement ECDSA extended verify

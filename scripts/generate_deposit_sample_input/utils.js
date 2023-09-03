@@ -1,97 +1,20 @@
-const bigInt = require("snarkjs").bigInt;
+const ethers = require("ethers");
 
-exports.ZeroPrvKey = new Uint8Array([
-    16, 10, 128, 66, 183, 37, 215, 35,
-    179, 180, 153, 3, 93, 64, 205, 139,
-    121, 119, 62, 94, 156, 246, 123, 215,
-    173, 28, 194, 83, 123, 236, 120, 190
-]);
-
-
-exports.ZeroPubKeyX = new Uint8Array([
-    37, 150, 3, 197, 80, 239, 118, 37,
-    167, 89, 188, 69, 183, 194, 58, 227,
-    49, 49, 197, 24, 129, 29, 183, 200,
-    52, 164, 170, 164, 101, 160, 214, 25
-]);
-
-
-exports.ZeroPubKeyY = new Uint8Array([
-    26, 96, 75, 249, 228, 205, 141, 163,
-    34, 194, 150, 242, 29, 6, 251, 30,
-    252, 233, 12, 181, 15, 165, 60, 1,
-    215, 167, 115, 197, 45, 5, 212, 4
-]);
-
-
+exports.ZeroPrvKey = new Uint8Array([200, 252, 143, 245, 64, 244, 242, 122, 139, 45, 110, 187, 160, 82, 116, 248, 63, 96, 239, 99, 72, 198, 243, 46, 84, 224, 129, 83, 130, 72, 70, 33])
+exports.ZeroPubKeyX = new Uint8Array([201, 149, 139, 10, 119, 112, 41, 215, 16, 63, 91, 210, 168, 82, 19, 36, 133, 85, 167, 128, 29, 89, 227, 70, 245, 153, 108, 54, 114, 153, 213, 163])
+exports.ZeroPubKeyY = new Uint8Array([148, 4, 20, 67, 49, 217, 73, 245, 254, 20, 124, 62, 132, 132, 47, 223, 189, 239, 5, 132, 56, 162, 136, 78, 66, 73, 122, 188, 237, 226, 119, 169])
 exports.Empty = [
-    new Uint8Array([
-        209, 107, 35, 20, 91, 63, 241, 54,
-        164, 103, 50, 91, 173, 173, 12, 194,
-        197, 216, 234, 96, 78, 208, 220, 155,
-        119, 218, 231, 163, 40, 213, 241, 25
-    ]),
-    new Uint8Array([
-        18, 160, 73, 81, 241, 193, 137, 152,
-        44, 95, 2, 51, 26, 219, 205, 112,
-        12, 104, 42, 148, 106, 20, 61, 43,
-        244, 216, 139, 183, 66, 97, 21, 22
-    ]),
-    new Uint8Array([
-        97, 183, 3, 153, 26, 91, 117, 69,
-        244, 120, 252, 25, 37, 65, 42, 174,
-        164, 240, 59, 5, 154, 187, 22, 127,
-        82, 33, 36, 187, 202, 166, 157, 0
-    ]),
-    new Uint8Array([
-        35, 56, 84, 181, 254, 143, 1, 249,
-        122, 211, 146, 195, 193, 181, 42, 28,
-        195, 66, 57, 250, 222, 52, 59, 155,
-        4, 230, 192, 157, 38, 23, 177, 5
-    ]),
-    new Uint8Array([
-        54, 17, 162, 164, 195, 143, 150, 234,
-        36, 178, 85, 21, 157, 101, 137, 101,
-        93, 235, 16, 249, 163, 79, 99, 219,
-        172, 54, 231, 3, 123, 135, 93, 11
-    ]),
-    new Uint8Array([
-        34, 188, 23, 127, 68, 138, 29, 54,
-        30, 46, 203, 148, 133, 12, 200, 241,
-        241, 110, 20, 244, 135, 55, 132, 224,
-        107, 15, 243, 221, 185, 151, 0, 38
-    ]),
-    new Uint8Array([
-        101, 214, 17, 202, 13, 141, 79, 139,
-        52, 44, 71, 194, 226, 16, 182, 77,
-        240, 145, 100, 135, 203, 125, 136, 96,
-        134, 179, 252, 21, 12, 199, 4, 12
-    ]),
-    new Uint8Array([
-        244, 23, 88, 4, 78, 49, 25, 246,
-        146, 223, 216, 205, 45, 56, 246, 158,
-        70, 220, 30, 51, 47, 143, 133, 187,
-        120, 250, 32, 132, 104, 95, 177, 27
-    ]),
-    new Uint8Array([
-        104, 98, 68, 218, 222, 98, 88, 113,
-        243, 220, 218, 244, 72, 254, 107, 24,
-        51, 101, 59, 121, 191, 29, 233, 211,
-        167, 185, 49, 17, 174, 63, 201, 4
-    ]),
-    new Uint8Array([
-        202, 131, 231, 45, 220, 209, 90, 14,
-        206, 45, 201, 195, 174, 53, 78, 247,
-        91, 19, 153, 158, 64, 94, 27, 36,
-        61, 95, 80, 44, 10, 254, 79, 22
-    ]),
-    new Uint8Array([
-        115, 236, 218, 100, 28, 78, 131, 57,
-        158, 126, 236, 105, 25, 19, 144, 205,
-        79, 219, 58, 112, 84, 199, 29, 248,
-        247, 45, 254, 47, 41, 167, 116, 13
-    ])
-];
+    new Uint8Array([117, 116, 100, 176, 163, 96, 246, 237, 85, 160, 46, 29, 196, 95, 132, 146, 26, 13, 247, 54, 192, 117, 39, 236, 147, 170, 204, 79, 44, 223, 161, 15]),
+    new Uint8Array([138, 71, 213, 77, 58, 68, 121, 183, 243, 5, 132, 181, 134, 184, 128, 29, 121, 187, 117, 1, 226, 112, 231, 110, 38, 210, 101, 40, 199, 244, 51, 32]),
+    new Uint8Array([17, 99, 215, 186, 32, 62, 247, 14, 115, 87, 212, 218, 179, 28, 186, 245, 54, 168, 23, 122, 255, 47, 108, 249, 61, 174, 64, 20, 251, 201, 203, 19]),
+    new Uint8Array([165, 253, 230, 129, 13, 115, 207, 219, 44, 36, 141, 95, 13, 155, 104, 54, 223, 238, 123, 3, 241, 166, 88, 206, 124, 100, 5, 103, 140, 59, 112, 41]),
+    new Uint8Array([199, 179, 169, 148, 179, 31, 7, 191, 203, 12, 161, 68, 245, 164, 238, 156, 13, 232, 158, 149, 183, 53, 89, 192, 81, 16, 108, 43, 172, 28, 58, 24]),
+    new Uint8Array([232, 184, 60, 87, 46, 97, 81, 211, 201, 38, 60, 53, 115, 80, 90, 223, 186, 9, 175, 121, 2, 213, 250, 38, 116, 76, 109, 202, 72, 65, 128, 20]),
+    new Uint8Array([61, 168, 44, 55, 97, 197, 210, 19, 77, 144, 245, 43, 137, 34, 178, 140, 32, 56, 44, 184, 20, 200, 20, 240, 55, 223, 152, 238, 246, 120, 170, 22]),
+    new Uint8Array([23, 169, 242, 167, 251, 70, 210, 227, 93, 111, 120, 254, 69, 215, 112, 49, 176, 219, 170, 62, 192, 244, 50, 167, 143, 130, 147, 192, 196, 171, 21, 24]),
+    new Uint8Array([233, 78, 24, 172, 81, 106, 113, 74, 202, 80, 97, 163, 89, 88, 57, 193, 9, 163, 123, 199, 175, 136, 181, 142, 226, 177, 128, 159, 210, 94, 13, 29]),
+    new Uint8Array([122, 204, 109, 187, 127, 194, 160, 61, 116, 175, 197, 206, 129, 27, 86, 97, 44, 18, 175, 110, 175, 115, 180, 97, 146, 112, 108, 88, 58, 179, 2, 31])
+]
 
 exports.isEqual = function (x, y) {
     if (x.length != y.length)
@@ -99,25 +22,102 @@ exports.isEqual = function (x, y) {
     return x.every((value, index) => value == y[index]);
 };
 
-function bigIntToUint8Array(num) {
-    const each = bigInt(1).shl(8);
-    const arr = [];
-    while (num.greater(bigInt(0))) {
-        arr.push(parseInt(num.mod(each)));
-        num = num.shr(8);
-    }
-    const _arr = []
-    for (let i = arr.length - 1; i >= 0; --i)
-        _arr.push(arr[i])
-    return new Uint8Array(_arr);
-    // return new Uint8Array(arr);
-}
-exports.bigIntToUint8Array = (num) => bigIntToUint8Array(num);
 
-function uint8ArrayTo64BitsArray(uint8array) {
-    return bigIntNumTo64BitsArray(uint8ArrayToBigInt(uint8array));
+function createUser(prvkey) {
+    const user = new ethers.Wallet(prvkey);
+    console.log("user.publicKey: ", user.publicKey);
+    const pubkX = "0x" + user.publicKey.slice(4, 68);
+    const pubkY = "0x" + user.publicKey.slice(68);
+    const obj = {
+        address: user.address,
+        publicKey: user.publicKey,
+        privateKey: user.privateKey,
+        publicKeyX: pubkX,
+        publicKeyY: pubkY
+    }
+    return obj;
 }
-exports.uint8ArrayTo64BitsArray = (uint8array) => uint8ArrayTo64BitsArray(uint8array);
+exports.createUser = (prvkey) => createUser(prvkey);
+
+function hex2Uint8Array(hex, l) {
+    const arr = [];
+    if ((hex.length > 2) && (hex.slice(0, 2) == "0x")) {
+        hex = hex.slice(2);
+    }
+    hex.match(/.{1,2}/g).map(x => arr.push(parseInt(x, 16)));
+    while (arr.length < l)
+        arr.push(0);
+    return new Uint8Array(arr);
+}
+exports.hex2Uint8Array = (hex, l = 32) => hex2Uint8Array(hex, l);
+
+function uint8Array2Hex(uint8array) {
+    let hex = "0x";
+    for (let i = 0; i < uint8array.length; ++i) {
+        hex += uint8array[i].toString(16).padStart(2, "0");
+    }
+    return hex;
+}
+exports.uint8Array2Hex = (uint8array) => uint8Array2Hex(uint8array);
+
+function uint8Array2BigIntString(uint8array) {
+    return BigInt(uint8Array2Hex(uint8array), 16).toString();
+}
+exports.uint8Array2BigIntString = (uint8array) => uint8Array2BigIntString(uint8array);
+
+function hex2BigIntString(hex) {
+    return BigInt(hex, 16).toString();
+}
+
+exports.getDepositRegisterInputCircuit = function (state, mimc) {
+    const noTx = state.txDepositTree.txs.length;
+
+    // check valid transaction (valid signature)
+    const senderPubKeyX = new Array(noTx);
+    const senderPubkeyY = new Array(noTx);
+    const receiverPubkeyX = new Array(noTx);
+    const receiverPubkeyY = new Array(noTx);
+    const amount = new Array(noTx);
+    const r = new Array(noTx);
+    const s = new Array(noTx);
+    const v = new Array(noTx);
+
+    for (let i = 0; i < state.txDepositTree.txs.length; ++i) {
+        senderPubKeyX[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].fromX);
+        senderPubkeyY[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].fromY);
+        receiverPubkeyX[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].toX);
+        receiverPubkeyY[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].toY);
+        r[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].r);
+        s[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].s);
+        v[i] = state.txDepositTree.txs[i].v;
+
+        // !
+        amount[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].amount);
+    }
+
+    const proof = [];
+    for (let i = 0; i < state.proof.length; ++i) {
+        proof.push(mimc.F.toString(state.proof[i]));
+    }
+
+    return {
+        oldAccountRoot: mimc.F.toString(state.oldAccountRoot),
+        depositRegisterRoot: mimc.F.toString(state.txDepositTree.root),
+        registerAccountRoot: mimc.F.toString(state.depositRegisterTree.root),
+        
+        newAccountRoot: mimc.F.toString(state.newAccountRoot),
+        proof: proof,
+        proofPos: state.proofPos,
+        senderPubKeyX: senderPubKeyX,
+        senderPubkeyY: senderPubkeyY,
+        receiverPubkeyX: receiverPubkeyX,
+        receiverPubkeyY: receiverPubkeyY,
+        amount: amount,
+        r: r,
+        s: s,
+        v: v
+    }
+}
 
 exports.getDepositExistenceInputCircuit = function (processState) {
     /* 

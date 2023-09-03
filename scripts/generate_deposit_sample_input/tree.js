@@ -1,4 +1,4 @@
-const { isEqual } = require("./utils.js");
+const { isEqual, uint8Array2Hex, uint8Array2BigIntString } = require("./utils.js");
 
 module.exports =
     class Tree {
@@ -93,12 +93,25 @@ module.exports =
 
         /* Debug */
         _d_print() {
-            console.log(this.innerNodes);
-            // for (let i = 0; i < this.innerNodes.length; ++i) {
-            //     for (let j = 0; j < this.innerNodes[i].length; ++j) {
-            //         console.log(this.innerNodes[i][j]);
-            //     }
-            // }
+            // console.log(this.innerNodes);
+            let space = "";
+            for (let i = 0; i < this.innerNodes.length; ++i) {
+                for (let j = 0; j < this.innerNodes[i].length; ++j) {
+                    console.log(space + uint8Array2Hex(this.innerNodes[i][j]));
+                }
+                space += " ";
+            }
+        }
+
+        _d_print_v1(mimc) {
+            // console.log(this.innerNodes);
+            let space = "";
+            for (let i = 0; i < this.innerNodes.length; ++i) {
+                for (let j = 0; j < this.innerNodes[i].length; ++j) {
+                    console.log(space + mimc.F.toString(this.innerNodes[i][j], 16));
+                }
+                space += " ";
+            }
         }
 
         _d_checkValidTree(mimc) {
