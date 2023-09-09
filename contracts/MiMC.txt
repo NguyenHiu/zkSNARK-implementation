@@ -1,5 +1,0 @@
-// pragma solidity >=0.8.21
-
-// interface IMiMC {
-//     function MiMCpe7(uint256,uint256) external pure returns(uint256);
-// }

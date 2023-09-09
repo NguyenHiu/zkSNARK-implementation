@@ -20,9 +20,12 @@ html(lang="en")
                 input(name="amount")
             br
             button(type="submit") Submit Deposit Request
-        if coordinator === address
+        if coordinatorAddress === address
             h1 You are Coordinator! You can update state!
-            form(action="/main_process_deposit_register", method="POST")
+            form(action="/process_deposit_register", method="POST")
                 button(type="submit") Process Deposit Register
         else
             h1 You are not Coordinator!
+        h2 Account Tree
+        form(action="/accountTree", method="GET")
+            button(type="submit") Wanna see account tree ?

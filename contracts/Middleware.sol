@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import "./verifier.sol";
+import "./DepositRegisterVerifier.sol";
 
 interface IMiMC {
     function MiMCpe7(uint256, uint256) external pure returns (uint256);
@@ -15,7 +15,7 @@ interface IMiMC {
 //     ) external returns (bool);
 // }
 
-contract Middleware is Groth16Verifier {
+contract Middleware is DepositRegisterVerifier {
     // constants
     uint prime =
         21888242871839275222246405745257275088548364400416034343698204186575808495617;
@@ -65,16 +65,13 @@ contract Middleware is Groth16Verifier {
         bytes32 r8y,
         bytes32 s
     );
+    event sDepositRegister(bool b);
 
     constructor(
         address _mimcContractAddress,
-        // address _depositRegisterVerifierContractAddress,
         bytes32 initializationAccountRoot
     ) {
         mimc = IMiMC(_mimcContractAddress);
-        // dpVerifier = IDepositRegisterVerifier(
-        //     _depositRegisterVerifierContractAddress
-        // );
         noDepositRegisterTx = 0;
         coordinator = msg.sender;
         accountRoots.push(initializationAccountRoot);
@@ -91,7 +88,7 @@ contract Middleware is Groth16Verifier {
         bytes32 s
     ) public payable {
         // emit dDebug(true);
-        require(amount * 1e18 == msg.value, "amount*1e18 != msg.value");
+        // require(uint(amount) * 1e18 == msg.value, "amount*1e18 != msg.value");
         address receiverAddress = address(
             bytes20((keccak256(abi.encodePacked(toX, toY))) << 96)
         );
@@ -190,7 +187,8 @@ contract Middleware is Groth16Verifier {
         }
         depositTxRoots.pop();
         depositAccountRoots.pop();
-        emit dGetString("SUCCESSFULLY");
+        noDepositRegisterTx -= 4;
+        emit sDepositRegister(true);
     }
 
     function update() private {}
