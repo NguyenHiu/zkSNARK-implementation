@@ -1,5 +1,15 @@
 # Zk-rollup in Ethereum
-## 1. How to use
+
+Smart contracts and Circuits have already been compiled.
+
+[Only Feature: Deposit Register]
+How to use:
+- Run `npm start`.
+- Open the login page and log in using the address and private key from the `build/ganache_accounts/accounts.json` file (the first address is designated as the Coordinator).
+- Initiate some deposit register transactions (>=4 & <8) using the public key (from `build/ganache_accounts/publickey.json`). This demo version defines a fixed tree with 8 leaf nodes and 4 leaf nodes for the deposit register tree.
+- Click on 'Process Deposit Register' to update the new state on the blockchain.
+- Wait for a successful notification and check the new account tree (click the 'Wanna see account tree?' button).
+<!-- ## 1. How to use
 Open ganache
 
 ### 1.1. Migrate & Compile
@@ -42,4 +52,4 @@ node actor.js
 - Compile circom
 ``` bash
 circom verify_merkle_root.circom --r1cs --wasm --sym
-```
+``` -->
