@@ -1,29 +1,69 @@
 const buildMimc7 = require("circomlibjs").buildMimc7;
-const { randomBytes } = require("ethers");
+const buildEddsa = require("circomlibjs").buildEddsa;
+const snarkjs = require("snarkjs");
 const secp256k1 = require("secp256k1")
 const Transaction = require("./transaction.js");
-const AccountTree = require("./accountTree.js");
-const Account = require("./account.js");
+const { randomBytes } = require("ethers/lib/utils.js");
+const { ethers } = require("ethers");
+const { hex2Uint8Array, uint8Array2Hex } = require("./utils.js");
+const fs = require("fs");
+
+function createUserL2(prvkey_hex, mimc, eddsa) {
+    const _prvkey_uint8array = mimc.F.e(prvkey_hex, 16);
+    const pubkey_Ed = eddsa.prv2pub(_prvkey_uint8array);
+    return {
+        prvkey: _prvkey_uint8array,
+        pubkeyX: pubkey_Ed[0],
+        pubkeyY: pubkey_Ed[1]
+    }
+}
+
 
 async function run() {
     const mimc = await buildMimc7();
+    const eddsa = await buildEddsa();
 
-    let zr = new Uint8Array(new Array(32).fill(0));
-    const accs = [];
-    for (let i = 0; i < 8; ++i) {
-        accs.push(new Account(i, zr, zr, 0, 0, mimc));
-    }
-    const accTree = new AccountTree(accs, mimc);
-    accTree._d_print();
+    // const A_privateKey = uint8Array2Hex(new Uint8Array(new Array(32).fill(0)));
+    // const B_privateKey = uint8Array2Hex(new Uint8Array(new Array(32).fill(1)));
 
-    let newAddr = new Uint8Array(new Array(32).fill(1));
-    const newAccs = [];
-    for (let i = 0; i < 4; ++i) {
-        newAccs.push(new Account(i, newAddr, newAddr, 0, 0, mimc));
-    }
-    const newTree = new AccountTree(newAccs, mimc);
-    accTree.updateSubTree(newTree, 1, 0);
-    accTree._d_print();
+    // const A = createUserL2(A_privateKey, mimc, eddsa);
+    // const B = createUserL2(B_privateKey, mimc, eddsa);
+
+    // console.log(mimc.F.toString(A.pubkeyX));
+    // console.log(mimc.F.toString(A.pubkeyY));
+
+    // const msg = new Uint8Array(new Array(32).fill(2));
+    // const sign = eddsa.signMiMC(A.prvkey, msg);
+    // const input = {
+    //     R8X: mimc.F.toString(sign.R8[0]),
+    //     R8Y: mimc.F.toString(sign.R8[1]),
+    //     S: mimc.F.toString(mimc.F.e(sign.S)),
+    //     msg: mimc.F.toString(msg),
+    //     pX: mimc.F.toString(A.pubkeyX),
+    //     pY: mimc.F.toString(A.pubkeyY)
+    // }
+    // console.log(sign);
+
+    // const json_parse = JSON.stringify(input)
+
+    // fs.writeFile(
+    //     "../../build/inputs/test.json",
+    //     json_parse,
+    //     'utf-8',
+    //     () => { });
+
+    const inputPath = "../../build/inputs/1_test_deposit_register_proof.json";
+    const input = JSON.parse(fs.readFileSync(inputPath));
+    // console.log("input: ", input);
+    const wasm = "../../build/circuits/deposit_register_verifier/deposit_register_verifier_js/deposit_register_verifier.wasm";
+    const zkey = "../../build/circuits/deposit_register_verifier/deposit_register_verifier_1.zkey"
+    const { proof, publicSignals } = await snarkjs.groth16.fullProve(input, wasm, zkey);
+    console.log("proof: ", proof);
+    console.log("publicSignals: ", publicSignals);
+    const rawCallData = await snarkjs.groth16.exportSolidityCallData(proof, publicSignals);
+    const jsonCallData = rawCallData.split(',');
+    console.log(jsonCallData);
+    // snarkjs.zKey.exportVerificationKey()
 }
 
 run();

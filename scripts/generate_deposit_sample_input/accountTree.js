@@ -73,12 +73,12 @@ module.exports = class AccountTree extends Tree {
         this.innerNodes[0][0] = newValue;
     }
 
-    processDepositRegisterTxTree(txDepositTree, mimc) {
+    processDepositRegisterTxTree(txDepositTree, mimc, eddsa) {
         // assume that all transactions are valid!
         const currentAccountRoot = this.root;
         const newAccount = [];
         for (let i = 0; i < txDepositTree.txs.length; ++i) {
-            if (txDepositTree.txs[i].checkSignature(mimc) == false) {
+            if (txDepositTree.txs[i].checkSignature(mimc, eddsa) == false) {
                 console.log(`index ${i} has wrong signature`);
             }
             newAccount.push(new Account(
@@ -87,25 +87,21 @@ module.exports = class AccountTree extends Tree {
                 txDepositTree.txs[i].amount,
                 0, mimc));
         }
-        console.log("Before");
-        this._d_print();
         const newAccountRootRow = this.depth - txDepositTree.depth;
         const newAccountRootCol = this.existEmptySubTreeAt(newAccountRootRow);
         const { proof, pos } = this.getProofInnerNode(newAccountRootRow, newAccountRootCol);
-        const newAccountTree = new AccountTree(newAccount, mimc);
-        this.updateSubTree(newAccountTree, newAccountRootRow, newAccountRootCol);
-        this.rehashingFromInnerNode(newAccountTree.root, newAccountRootRow, newAccountRootCol, proof, pos, mimc);
+        const registerAccountTree = new AccountTree(newAccount, mimc);
+        this.updateSubTree(registerAccountTree, newAccountRootRow, newAccountRootCol);
+        this.rehashingFromInnerNode(registerAccountTree.root, newAccountRootRow, newAccountRootCol, proof, pos, mimc);
         this.root = this.innerNodes[0][0];
 
-        console.log("After");
-        this._d_print();
         return {
             oldAccountRoot: currentAccountRoot,
             newAccountRoot: this.root,
-            proof: proof,
-            proofPos: pos,
+            proofExistEmptySubTree: proof,
+            proofPosExistEmptySubTree: pos,
             txDepositTree: txDepositTree,
-            depositRegisterTree: newAccountTree
+            registerAccountTree: registerAccountTree
         }
     }
 

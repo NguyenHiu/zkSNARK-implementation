@@ -1,22 +1,23 @@
 pragma circom  2.0.2;
-include "../../node_modules/circomlib/circuits/mimc.circom";
+include "../../node_modules/circomlib/circuits/eddsamimc.circom";
+
 
 template Main() {
-    signal input a;
-    signal input b;
-    signal input c;
-    signal input d;
-    signal input e;
+    signal input R8X;
+    signal input R8Y;
+    signal input S;
+    signal input msg;
+    signal input pX;
+    signal input pY;
 
-    component MultiMiMC7 = MultiMiMC7(5, 91);
-    MultiMiMC7.in[0] <== a;
-    MultiMiMC7.in[1] <== b;
-    MultiMiMC7.in[2] <== c;
-    MultiMiMC7.in[3] <== d;
-    MultiMiMC7.in[4] <== e;
-    MultiMiMC7.k <== 5;
-
-    log(MultiMiMC7.out);
+    component x = EdDSAMiMCVerifier();
+    x.enabled <== 1;
+    x.Ax <== pX;
+    x.Ay <== pY;
+    x.S <== S;
+    x.R8x <== R8X;
+    x.R8y <== R8Y;
+    x.M <== msg;
 }
 
 component main  = Main();

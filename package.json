@@ -17,6 +17,6 @@
     "web3": "^4.1.0"
   },
   "scripts": {
-    "start": "nodemon scripts/main/server.js --ignore build/ganacheAccounts/accounts.json"
+    "start": "nodemon scripts/main/server.js --ignore build/ganacheAccounts/accounts.json --ignore build/inputs/1_test_deposit_register_proof.json"
   }
 }

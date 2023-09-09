@@ -1,4 +1,4 @@
-const ethers = require("ethers");
+const { ethers } = require("ethers");
 
 exports.ZeroPrvKey = new Uint8Array([200, 252, 143, 245, 64, 244, 242, 122, 139, 45, 110, 187, 160, 82, 116, 248, 63, 96, 239, 99, 72, 198, 243, 46, 84, 224, 129, 83, 130, 72, 70, 33])
 exports.ZeroPubKeyX = new Uint8Array([201, 149, 139, 10, 119, 112, 41, 215, 16, 63, 91, 210, 168, 82, 19, 36, 133, 85, 167, 128, 29, 89, 227, 70, 245, 153, 108, 54, 114, 153, 213, 163])
@@ -23,27 +23,27 @@ exports.isEqual = function (x, y) {
 };
 
 
-function createUser(prvkey) {
-    const user = new ethers.Wallet(prvkey);
-    console.log("user.publicKey: ", user.publicKey);
-    const pubkX = "0x" + user.publicKey.slice(4, 68);
-    const pubkY = "0x" + user.publicKey.slice(68);
-    const obj = {
-        address: user.address,
-        publicKey: user.publicKey,
-        privateKey: user.privateKey,
-        publicKeyX: pubkX,
-        publicKeyY: pubkY
-    }
-    return obj;
+exports.createUserL1 = (prvkey_hex, mimc) => {
+    const wallet = new ethers.Wallet(prvkey_hex);
+    return wallet;
 }
-exports.createUser = (prvkey) => createUser(prvkey);
+
+exports.createUserL2 = (prvkey_hex, mimc, eddsa) => {
+    const _prvkey_uint8array = mimc.F.e(prvkey_hex, 16);
+    const pubkey_Ed = eddsa.prv2pub(_prvkey_uint8array);
+    return {
+        prvkey: _prvkey_uint8array,
+        pubkeyX: pubkey_Ed[0],
+        pubkeyY: pubkey_Ed[1]
+    }
+}
 
 function hex2Uint8Array(hex, l) {
     const arr = [];
     if ((hex.length > 2) && (hex.slice(0, 2) == "0x")) {
         hex = hex.slice(2);
     }
+    if (hex.length == 63) hex = "0" + hex;
     hex.match(/.{1,2}/g).map(x => arr.push(parseInt(x, 16)));
     while (arr.length < l)
         arr.push(0);
@@ -69,53 +69,76 @@ function hex2BigIntString(hex) {
     return BigInt(hex, 16).toString();
 }
 
+function uint8Array2uint64Array(uint8array) {
+    let num = BigInt(uint8Array2Hex(uint8array), 16);
+    const _64bitarray = [];
+    const e = BigInt(1) << BigInt(64);
+    while (num > BigInt(0)) {
+        _64bitarray.push((num % e).toString());
+        num = num >> BigInt(64);
+    }
+    return _64bitarray;
+}
+exports.uint8Array2uint64Array = (uint8array) => uint8Array2uint64Array(uint8array);
+
 exports.getDepositRegisterInputCircuit = function (state, mimc) {
-    const noTx = state.txDepositTree.txs.length;
+    const txDepositTree = state.txDepositTree;
+    const txs = txDepositTree.txs;
+    const noTx = txs.length;
 
     // check valid transaction (valid signature)
-    const senderPubKeyX = new Array(noTx);
+    const senderPubkeyX = new Array(noTx);
     const senderPubkeyY = new Array(noTx);
     const receiverPubkeyX = new Array(noTx);
     const receiverPubkeyY = new Array(noTx);
     const amount = new Array(noTx);
-    const r = new Array(noTx);
-    const s = new Array(noTx);
-    const v = new Array(noTx);
+    const R8X = new Array(noTx);
+    const R8Y = new Array(noTx);
+    const S = new Array(noTx);
+    const proofTxExist = new Array(noTx);
+    const proofPosTxExist = new Array(noTx);
 
-    for (let i = 0; i < state.txDepositTree.txs.length; ++i) {
-        senderPubKeyX[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].fromX);
-        senderPubkeyY[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].fromY);
-        receiverPubkeyX[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].toX);
-        receiverPubkeyY[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].toY);
-        r[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].r);
-        s[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].s);
-        v[i] = state.txDepositTree.txs[i].v;
+    for (let i = 0; i < noTx; ++i) {
+        senderPubkeyX[i] = mimc.F.toString(txs[i].fromX);
+        senderPubkeyY[i] = mimc.F.toString(txs[i].fromY);
+        receiverPubkeyX[i] = mimc.F.toString(txs[i].toX);
+        receiverPubkeyY[i] = mimc.F.toString(txs[i].toY);
+        amount[i] = mimc.F.toString(txs[i].amount);
+        R8X[i] = mimc.F.toString(txs[i].R8X);
+        R8Y[i] = mimc.F.toString(txs[i].R8Y);
+        S[i] = txs[i].S.toString();
 
-        // !
-        amount[i] = uint8Array2BigIntString(state.txDepositTree.txs[i].amount);
+        const { proof, proofPos } = txDepositTree.getProof(i);
+        const _convertProof = [];
+        proof.map(x => _convertProof.push(mimc.F.toString(x)));
+        proofTxExist[i] = _convertProof;
+        proofPosTxExist[i] = proofPos;
     }
 
-    const proof = [];
-    for (let i = 0; i < state.proof.length; ++i) {
-        proof.push(mimc.F.toString(state.proof[i]));
+    const proofExistEmptySubTree = [];
+    for (let i = 0; i < state.proofExistEmptySubTree.length; ++i) {
+        proofExistEmptySubTree.push(mimc.F.toString(state.proofExistEmptySubTree[i]));
     }
+
 
     return {
         oldAccountRoot: mimc.F.toString(state.oldAccountRoot),
         depositRegisterRoot: mimc.F.toString(state.txDepositTree.root),
-        registerAccountRoot: mimc.F.toString(state.depositRegisterTree.root),
-        
+        registerAccountRoot: mimc.F.toString(state.registerAccountTree.root),
+
         newAccountRoot: mimc.F.toString(state.newAccountRoot),
-        proof: proof,
-        proofPos: state.proofPos,
-        senderPubKeyX: senderPubKeyX,
+        proofExistEmptySubTree: proofExistEmptySubTree,
+        proofPosExistEmptySubTree: state.proofPosExistEmptySubTree,
+        senderPubkeyX: senderPubkeyX,
         senderPubkeyY: senderPubkeyY,
         receiverPubkeyX: receiverPubkeyX,
         receiverPubkeyY: receiverPubkeyY,
         amount: amount,
-        r: r,
-        s: s,
-        v: v
+        R8X: R8X,
+        R8Y: R8Y,
+        S: S,
+        proofTxExist: proofTxExist,
+        proofPosTxExist: proofPosTxExist
     }
 }
 
@@ -129,7 +152,6 @@ exports.getDepositExistenceInputCircuit = function (processState) {
         txDetails: txDetails
     }
     */
-
 
     const txTree = processState.txTree;
     const noTx = txTree.txs.length;

@@ -1,19 +1,21 @@
 pragma solidity ^0.8.0;
 
+import "./verifier.sol";
+
 interface IMiMC {
     function MiMCpe7(uint256, uint256) external pure returns (uint256);
 }
 
-interface IDepositRegisterVerifier {
-    function verifyProof(
-        uint[2] calldata,
-        uint[2][2] calldata,
-        uint[2] calldata,
-        uint[3] calldata
-    ) external returns (bool);
-}
+// interface IDepositRegisterVerifier {
+//     function verifyProof(
+//         uint[2] calldata,
+//         uint[2][2] calldata,
+//         uint[2] calldata,
+//         uint[4] calldata
+//     ) external returns (bool);
+// }
 
-contract Middleware {
+contract Middleware is Groth16Verifier {
     // constants
     uint prime =
         21888242871839275222246405745257275088548364400416034343698204186575808495617;
@@ -35,7 +37,7 @@ contract Middleware {
     bytes32[] accountRoots;
     address coordinator;
     IMiMC public mimc;
-    IDepositRegisterVerifier public dpVerifier; // dp - deposit register
+    // IDepositRegisterVerifier public dpVerifier; // dp - deposit register
 
     // deposit register variables
     bytes32[] depositAccountRoots;
@@ -50,6 +52,7 @@ contract Middleware {
     event dGetBytes20(bytes20 addr);
     event dGetUint(uint u);
     event dGetBytes32Array(bytes32[] arr);
+    event dGetBool(bool b);
 
     // main events
     event eDepositRegister(
@@ -58,15 +61,14 @@ contract Middleware {
         bytes32 toX,
         bytes32 toY,
         uint amount,
-        bytes32 r,
-        bytes32 s,
-        uint8 v
+        bytes32 r8x,
+        bytes32 r8y,
+        bytes32 s
     );
 
     constructor(
         address _mimcContractAddress,
-        // ,
-        // address _depositRegisterVerifierContractAddress
+        // address _depositRegisterVerifierContractAddress,
         bytes32 initializationAccountRoot
     ) {
         mimc = IMiMC(_mimcContractAddress);
@@ -84,9 +86,9 @@ contract Middleware {
         bytes32 toX,
         bytes32 toY,
         uint amount,
-        bytes32 r,
-        bytes32 s,
-        uint8 v
+        bytes32 r8x,
+        bytes32 r8y,
+        bytes32 s
     ) public payable {
         // emit dDebug(true);
         require(amount * 1e18 == msg.value, "amount*1e18 != msg.value");
@@ -98,7 +100,7 @@ contract Middleware {
             emit dDebug(false);
         } else {
             existedPubkeys[receiverAddress] = true;
-            _depositRegister(fromX, fromY, toX, toY, amount, r, s, v);
+            _depositRegister(fromX, fromY, toX, toY, amount, r8x, r8y, s);
         }
     }
 
@@ -108,19 +110,19 @@ contract Middleware {
         bytes32 toX,
         bytes32 toY,
         uint amount,
-        bytes32 r,
-        bytes32 s,
-        uint8 v
+        bytes32 r8x,
+        bytes32 r8y,
+        bytes32 s
     ) public {
         noDepositRegisterTx += 1;
 
         // create a new account
-        // uint[] memory accountProperties = new uint[](4);
-        // accountProperties[0] = uint(toX);
-        // accountProperties[1] = uint(toY);
-        // accountProperties[2] = amount;
-        // accountProperties[3] = 0;
-        // uint newAccountHash = uint(mimcMultiHash(accountProperties));
+        uint[] memory accountProperties = new uint[](4);
+        accountProperties[0] = uint(toX);
+        accountProperties[1] = uint(toY);
+        accountProperties[2] = amount;
+        accountProperties[3] = 0;
+        uint newAccountHash = uint(mimcMultiHash(accountProperties));
 
         // create a new tx
         uint[] memory txPropertes = new uint[](6);
@@ -132,33 +134,29 @@ contract Middleware {
         txPropertes[5] = amount;
         uint newTxHash = uint(mimcMultiHash(txPropertes));
 
-        // emit dGetBytes32(bytes32(newTxHash));
+        emit eDepositRegister(fromX, fromY, toX, toY, amount, r8x, r8y, s);
 
-        emit eDepositRegister(fromX, fromY, toX, toY, amount, r, s, v);
+        // re-hash root
+        uint tmp1 = newAccountHash;
+        uint tmp2 = newTxHash;
+        uint _noTx = noDepositRegisterTx;
+        while (_noTx % 2 == 0) {
+            _noTx /= 2;
+            uint[] memory inputArray = new uint[](2);
+            inputArray[0] = uint(
+                depositAccountRoots[depositAccountRoots.length - 1]
+            );
+            inputArray[1] = tmp1;
+            depositAccountRoots.pop();
+            tmp1 = mimcMultiHash(inputArray);
 
-        // // re-hash root
-        // uint tmp1 = newAccountHash;
-        // uint tmp2 = newTxHash;
-        // uint _noTx = noDepositRegisterTx;
-        // while (_noTx % 2 == 0) {
-        //     _noTx /= 2;
-        //     uint[] memory inputArray = new uint[](2);
-        //     inputArray[0] = uint(
-        //         depositAccountRoots[depositAccountRoots.length - 1]
-        //     );
-        //     inputArray[1] = tmp1;
-        //     depositAccountRoots.pop();
-        //     tmp1 = mimcMultiHash(inputArray);
-
-        //     inputArray[0] = uint(
-        //         depositTxRoots[depositTxRoots.length - 1]
-        //     );
-        //     inputArray[1] = tmp2;
-        //     depositTxRoots.pop();
-        //     tmp2 = mimcMultiHash(inputArray);
-        // }
-        // depositAccountRoots.push(bytes32(tmp1));
-        // depositTxRoots.push(bytes32(tmp2));
+            inputArray[0] = uint(depositTxRoots[depositTxRoots.length - 1]);
+            inputArray[1] = tmp2;
+            depositTxRoots.pop();
+            tmp2 = mimcMultiHash(inputArray);
+        }
+        depositAccountRoots.push(bytes32(tmp1));
+        depositTxRoots.push(bytes32(tmp2));
     }
 
     function getDepositRegisterRoot() public {
@@ -166,21 +164,34 @@ contract Middleware {
     }
 
     function verifyProof_DepositRegister(
-        uint[2] calldata pi_a,
-        uint[2][2] calldata pi_b,
-        uint[2] calldata pi_c,
-        uint[3] calldata publicSignals
-    ) public returns (bool) {
-        emit dGetBytes32(depositAccountRoots[0]);
-        // require(depositRegisterRoots[0] == bytes32(publicSignals[1]), "Deposit Register Root is invalid!");
-        emit dGetBytes32(accountRoots[0]);
-        // require(accountRoots[0] == bytes32(publicSignals[2]), "Account Root is invalid!");
+        uint[2] calldata _pA,
+        uint[2][2] calldata _pB,
+        uint[2] calldata _pC,
+        uint[4] calldata _pubSignals
+    ) public view {
+        require(
+            depositTxRoots[0] == bytes32(_pubSignals[0]),
+            "Deposit Transactions are invalid!"
+        );
+        require(
+            depositAccountRoots[0] == bytes32(_pubSignals[1]),
+            "New Accounts are invalid"
+        );
+        require(
+            accountRoots[accountRoots.length - 1] == bytes32(_pubSignals[2]),
+            "The states do not match"
+        );
+
+        require(this.verifyProof(_pA, _pB, _pC, _pubSignals));
     }
 
-    function mimcMultiHash(uint[] memory arr) public returns (uint) {
+    function update() private {
+
+    }
+
+    function mimcMultiHash(uint[] memory arr) public view returns (uint) {
         uint r = 0;
         for (uint i = 0; i < arr.length; i++) {
-            // emit dGetBytes32(bytes32(r));
             r =
                 (((r + mimc.MiMCpe7(arr[i] % prime, r)) % prime) +
                     (arr[i] % prime)) %

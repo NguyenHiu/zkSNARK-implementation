@@ -1,47 +1,34 @@
 pragma circom  2.0.2;
-include "../../node_modules/circomlib/circuits/mimc.circom";
+include "../../node_modules/circomlib/circuits/eddsamimc.circom";
 include "../ECDSA/ecdsa.circom";
 
-template convert64bitsArray() {
-    // assume: valid input
-    signal input a;
-    signal output out[4];
+// D: account tree depth
+// d: new account tree depth
+template Main(D, d) {
+    var noNewAccount = 2**d;
+    var D_d = D-d;
 
-    var tmp;
-    var A = a;
-    var e = 1<<64;
-    for (var i = 0; i < 4; i++) {
-        tmp = A % e;
-        out[i] <-- tmp;
-        A = A>>64;
-    }
-}
-
-template Main(k, h) {
     /* Signals */
     // Public Signals
-    signal input depositRegisterRoot_Onchain;
-    signal input registerAccountRoot_Onchain;
-    signal input oldAccountRoot_Onchain;
-    // Private Signals
     signal input depositRegisterRoot;
     signal input registerAccountRoot;
     signal input oldAccountRoot;
-
     signal input newAccountRoot;
-    signal input proof[k];
-    signal input proofPos[k];
 
-    signal input senderPubkeyX[4];
-    signal input senderPubkeyY[4];
-    signal input receiverPubkeyX[4];
-    signal input receiverPubkeyY[4];
-    signal input amount[4];
-    signal input r[4];
-    signal input s[4];
-    signal input v[4];
-    // output signals
-    signal output out;
+    // Private Signals
+    signal input proofExistEmptySubTree[D_d];
+    signal input proofPosExistEmptySubTree[D_d];
+
+    signal input senderPubkeyX[noNewAccount];
+    signal input senderPubkeyY[noNewAccount];
+    signal input receiverPubkeyX[noNewAccount];
+    signal input receiverPubkeyY[noNewAccount];
+    signal input amount[noNewAccount];
+    signal input R8X[noNewAccount];
+    signal input R8Y[noNewAccount];
+    signal input S[noNewAccount];
+    signal input proofTxExist[noNewAccount][d];
+    signal input proofPosTxExist[noNewAccount][d];
 
     // variables
     var hash0List[10] = [
@@ -57,39 +44,13 @@ template Main(k, h) {
         6984959195455514022151545760850437139389537397033278595432294845838845639909
     ];
 
-    depositRegisterRoot_Onchain === depositRegisterRoot;
-    registerAccountRoot_Onchain === registerAccountRoot;
-    oldAccountRoot_Onchain === oldAccountRoot;
-
-    component signatureCheck[4];
-    component converter[4][5];
-    component msghash[4];
-    for (var i = 0; i < 1; i++) {
-        signatureCheck[i] = ECDSAVerifyNoPubkeyCheck(64, 4);
-        /* input signals: r, s, msghash, pubkey*/ 
-        // r
-        converter[i][0] = convert64bitsArray();
-        converter[i][0].a <== r[i];
-        signatureCheck[i].r[0] <== converter[i][0].out[0];
-        signatureCheck[i].r[1] <== converter[i][0].out[1];
-        signatureCheck[i].r[2] <== converter[i][0].out[2];
-        signatureCheck[i].r[3] <== converter[i][0].out[3];
-        log(converter[i][0].out[0]);
-        log(converter[i][0].out[1]);
-        log(converter[i][0].out[2]);
-        log(converter[i][0].out[3]);
-        // s
-        converter[i][1] = convert64bitsArray();
-        converter[i][1].a <== s[i];
-        signatureCheck[i].s[0] <== converter[i][1].out[0];
-        signatureCheck[i].s[1] <== converter[i][1].out[1];
-        signatureCheck[i].s[2] <== converter[i][1].out[2];
-        signatureCheck[i].s[3] <== converter[i][1].out[3];
-        log(converter[i][1].out[0]);
-        log(converter[i][1].out[1]);
-        log(converter[i][1].out[2]);
-        log(converter[i][1].out[3]);
-        // msghash
+    // Check Signature & the existence of transactions
+    component signatureCheck[noNewAccount];
+    component converter[noNewAccount];
+    component msghash[noNewAccount];
+    component proofExistTxHash[noNewAccount][d];
+    for (var i = 0; i < noNewAccount; i++) {
+        // hash transaction
         msghash[i] = MultiMiMC7(6, 91);
         msghash[i].in[0] <== senderPubkeyX[i];
         msghash[i].in[1] <== senderPubkeyY[i];
@@ -98,71 +59,48 @@ template Main(k, h) {
         msghash[i].in[4] <== 0;
         msghash[i].in[5] <== amount[i];
         msghash[i].k <== 6;
-        converter[i][2] = convert64bitsArray();
-        converter[i][2].a <== msghash[i].out;
-        signatureCheck[i].msghash[0] <== converter[i][2].out[0];
-        signatureCheck[i].msghash[1] <== converter[i][2].out[1];
-        signatureCheck[i].msghash[2] <== converter[i][2].out[2];
-        signatureCheck[i].msghash[3] <== converter[i][2].out[3];
-        log(converter[i][2].out[0]);
-        log(converter[i][2].out[1]);
-        log(converter[i][2].out[2]);
-        log(converter[i][2].out[3]);
-        // pubkey
-        converter[i][3] = convert64bitsArray();
-        converter[i][3].a <== senderPubkeyX[i];
-        signatureCheck[i].pubkey[0][0] <== converter[i][3].out[0];
-        signatureCheck[i].pubkey[0][1] <== converter[i][3].out[1];
-        signatureCheck[i].pubkey[0][2] <== converter[i][3].out[2];
-        signatureCheck[i].pubkey[0][3] <== converter[i][3].out[3];
-        log(converter[i][3].out[0]);
-        log(converter[i][3].out[1]);
-        log(converter[i][3].out[2]);
-        log(converter[i][3].out[3]);
-        converter[i][4] = convert64bitsArray();
-        converter[i][4].a <== senderPubkeyY[i];
-        log(converter[i][4].out[0]);
-        log(converter[i][4].out[1]);
-        log(converter[i][4].out[2]);
-        log(converter[i][4].out[3]);
-        signatureCheck[i].pubkey[1][0] <== converter[i][4].out[0];
-        signatureCheck[i].pubkey[1][1] <== converter[i][4].out[1];
-        signatureCheck[i].pubkey[1][2] <== converter[i][4].out[2];
-        signatureCheck[i].pubkey[1][3] <== converter[i][4].out[3];
 
-        // log(signatureCheck[i].result);
+        // check signature
+        signatureCheck[i] = EdDSAMiMCVerifier();
+        signatureCheck[i].enabled <== 1;
+        signatureCheck[i].Ax <== senderPubkeyX[i];
+        signatureCheck[i].Ay <== senderPubkeyY[i];
+        signatureCheck[i].S <== S[i];
+        signatureCheck[i].R8x <== R8X[i];
+        signatureCheck[i].R8y <== R8Y[i];
+        signatureCheck[i].M <== msghash[i].out;
+
+        // check transaction proof
+        for (var j = 0; j < d; j++) {
+            proofExistTxHash[i][j] = MultiMiMC7(2, 91);
+            proofExistTxHash[i][j].in[0] <== proofTxExist[i][j] + proofPosTxExist[i][j] * (((j == 0) ? msghash[i].out : proofExistTxHash[i][j-1].out) - proofTxExist[i][j]);
+            proofExistTxHash[i][j].in[1] <== ((j == 0) ? msghash[i].out : proofExistTxHash[i][j-1].out) +  proofPosTxExist[i][j] * (proofTxExist[i][j] - ((j == 0) ? msghash[i].out : proofExistTxHash[i][j-1].out));
+            proofExistTxHash[i][j].k <== 2;
+        }
+        depositRegisterRoot === proofExistTxHash[i][d-1].out;
+        
     }
 
-    // component mimcs1[k];
-    // for (var i=0; i < k; i++) {
-    //     mimcs1[i] = MultiMiMC7(2, 91);
-    //     mimcs1[i].in[0] <== ((i==0) ? hash0List[h] : mimcs1[i-1].out) + proofPos[i] * (proof[i] - ((i==0) ? hash0List[h] : mimcs1[i-1].out));
-    //     mimcs1[i].in[1] <== proof[i] + proofPos[i] * (((i==0) ? hash0List[h] : mimcs1[i-1].out) - proof[i]);
-    //     mimcs1[i].k <== 2;
-    // }
-    // if (k == 0) {
-    //     hash0List[h] === oldAccountRoot;
-    // }
-    // else {
-    //     mimcs1[k-1].out === oldAccountRoot;
-    // }
+    /* Exist Empty Sub for new Account Tree ?  */
+    component existSubTreeHash[D_d];
+    for (var i = 0; i < D_d ; i++) {
+        existSubTreeHash[i] = MultiMiMC7(2, 91);
+        existSubTreeHash[i].in[0] <== proofExistEmptySubTree[i] + proofPosExistEmptySubTree[i] * (((i == 0) ? hash0List[2] : existSubTreeHash[i-1].out) - proofExistEmptySubTree[i]);
+        existSubTreeHash[i].in[1] <== ((i == 0) ? hash0List[2] : existSubTreeHash[i-1].out) + proofPosExistEmptySubTree[i] * (proofExistEmptySubTree[i] - ((i == 0) ? hash0List[2] : existSubTreeHash[i-1].out));
+        existSubTreeHash[i].k <== 2;
+    }
+    existSubTreeHash[D_d-1].out === oldAccountRoot;
 
-    // component mimcs2[k];
-    // for (var i=0; i < k; i++) {
-    //     mimcs2[i] = MultiMiMC7(2, 91);
-    //     mimcs2[i].in[0] <== proof[i] + proofPos[i] * (((i==0) ? depositRegisterRoot : mimcs2[i-1].out) - proof[i]);
-    //     mimcs2[i].in[1] <== ((i==0) ? depositRegisterRoot : mimcs2[i-1].out) + proofPos[i] * (proof[i] - ((i==0) ? depositRegisterRoot : mimcs2[i-1].out));
-    //     mimcs2[i].k <== 2;
-    // }
-    // if (k == 0) {
-    //     hash0List[h] === newAccountRoot;
-    // }
-    // else {
-    //     mimcs2[k-1].out === newAccountRoot;
-    // }
-
-    // log("true");
+    /* Check new Account Root */
+    component newAccountRootHash[D_d];
+    for (var i = 0; i < D_d ; i++) {
+        newAccountRootHash[i] = MultiMiMC7(2, 91);
+        newAccountRootHash[i].in[0] <== proofExistEmptySubTree[i] + proofPosExistEmptySubTree[i] * (((i == 0) ? registerAccountRoot : newAccountRootHash[i-1].out) - proofExistEmptySubTree[i]);
+        newAccountRootHash[i].in[1] <== ((i == 0) ? registerAccountRoot : newAccountRootHash[i-1].out) + proofPosExistEmptySubTree[i] * (proofExistEmptySubTree[i] - ((i == 0) ? registerAccountRoot : newAccountRootHash[i-1].out));
+        newAccountRootHash[i].k <== 2;
+    }
+    newAccountRootHash[D_d-1].out === newAccountRoot;
 }
 
 
-component main {public [registerAccountRoot_Onchain, oldAccountRoot_Onchain, depositRegisterRoot_Onchain]}  = Main(1, 2);
+component main {public [registerAccountRoot, oldAccountRoot, depositRegisterRoot, newAccountRoot]}  = Main(3, 2);
