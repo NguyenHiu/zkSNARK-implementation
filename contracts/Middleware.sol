@@ -168,7 +168,7 @@ contract Middleware is Groth16Verifier {
         uint[2][2] calldata _pB,
         uint[2] calldata _pC,
         uint[4] calldata _pubSignals
-    ) public view {
+    ) public { 
         require(
             depositTxRoots[0] == bytes32(_pubSignals[0]),
             "Deposit Transactions are invalid!"
@@ -183,11 +183,17 @@ contract Middleware is Groth16Verifier {
         );
 
         require(this.verifyProof(_pA, _pB, _pC, _pubSignals));
+        accountRoots.push(bytes32(_pubSignals[3]));
+        for (uint8 i = 0; i < depositTxRoots.length - 1; i++) {
+            depositTxRoots[i] = depositTxRoots[i + 1];
+            depositAccountRoots[i] = depositAccountRoots[i + 1];
+        }
+        depositTxRoots.pop();
+        depositAccountRoots.pop();
+        emit dGetString("SUCCESSFULLY");
     }
 
-    function update() private {
-
-    }
+    function update() private {}
 
     function mimcMultiHash(uint[] memory arr) public view returns (uint) {
         uint r = 0;

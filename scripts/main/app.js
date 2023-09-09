@@ -283,22 +283,17 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
         const wasm = "build/circuits/deposit_register_verifier/deposit_register_verifier_js/deposit_register_verifier.wasm";
         const zkey = "build/circuits/deposit_register_verifier/deposit_register_verifier_1.zkey"
         const { proof, publicSignals } = await snarkjs.groth16.fullProve(_proof, wasm, zkey);
-        // console.log("proof: ", proof);
-        // console.log("publicSignals: ", publicSignals);
         const rawCallData = await snarkjs.groth16.exportSolidityCallData(proof, publicSignals);
         const jsonCallData = JSON.parse("[" + rawCallData + "]")
-        console.log(jsonCallData);
-
-        console.log(await DepositVerifier.verifyProof(jsonCallData[0], jsonCallData[1],
-            jsonCallData[2], jsonCallData[3]));
 
         middleware.verifyProof_DepositRegister(
             jsonCallData[0], jsonCallData[1],
-            jsonCallData[0], jsonCallData[3], {
+            jsonCallData[2], jsonCallData[3], {
             from: coordinator_wallet.address,
             value: 0,
-            gasLimit: 300000,
-        });
+            gasLimit: 500000
+        }
+        )
     })
     return app;
 }) 
