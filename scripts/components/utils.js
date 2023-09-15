@@ -161,6 +161,10 @@ exports.getDepositRegisterInputCircuit = function (state, mimc) {
     }
 }
 
+exports.getDepositExistenceInputCircuit = function(state, mimc) {
+    
+}
+
 exports.getDepositExistenceInputCircuit = function (processState) {
     /* 
     processState {

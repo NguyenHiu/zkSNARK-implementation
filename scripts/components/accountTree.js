@@ -120,6 +120,30 @@ module.exports = class AccountTree extends Tree {
         }
     }
 
+    //public
+    // [DEPOSIT EXSITENCE] 
+    processDepositExistenceTree(txDepositTree, mimc, eddsa) {
+        /* 
+            const receiver = this.findAccountByPubkey(tx.toX, tx.toY);
+            const _r_proof = this.getProof(receiver.index);
+            const r_existenceProof = _r_proof.proof;
+            const r_existenceProofPos = _r_proof.proofPos;
+            const r_nonce = receiver.nonce;
+            const r_balance = receiver.balance;
+
+            receiver.acceptReceiveTx(tx.amount, mimc);
+            this.leafNodes[receiver.index] = receiver.hash;
+            this.rehashingTree(receiver.index, r_existenceProof, r_existenceProofPos, mimc);
+            this.root = this.innerNodes[0][0];
+
+            const r_intermediateRoot = this.root;
+
+            return {
+                ...
+            }
+        */
+    }
+
     // public
     // [TRANSFER]
     processTxTree(txTree, mimc) {

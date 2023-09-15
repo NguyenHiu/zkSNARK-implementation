@@ -78,7 +78,13 @@ template Main(D, d) {
         }
         depositRegisterRoot === proofExistTxHash[i][d-1].out;
         
-    }
+        /* 
+        check exist account (receiver) = merkle proof
+        update balance
+        cal intermediate account root (merkle proof) 
+        compare intermediate account root 
+        */
+}
 
     /* Exist Empty Sub for new Account Tree ?  */
     component existSubTreeHash[D_d];

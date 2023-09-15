@@ -186,6 +186,8 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
     })
     // create a transaction
     app.post('/main', restrict, function (req, res) {
+        // check exist account?
+
         const fromX = hex2Uint8Array(req.session.user.pubkeyX);
         const fromY = hex2Uint8Array(req.session.user.pubkeyY);
         const toX = hex2Uint8Array("0x" + req.body.toPublicKey.slice(4, 68));
