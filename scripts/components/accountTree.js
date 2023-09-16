@@ -1,6 +1,6 @@
 const Tree = require("./tree.js");
 const Account = require("./account.js");
-const { Empty, isEqual } = require("./utils.js");
+const { Empty, isEqual, ZeroPubKeyX, ZeroPubKeyY } = require("./utils.js");
 
 module.exports = class AccountTree extends Tree {
     constructor(_accounts, mimc) {
@@ -8,18 +8,34 @@ module.exports = class AccountTree extends Tree {
         this.accounts = _accounts;
     }
 
-    // private
+    existAccount(pubX, pubY, mimc) {
+        const _pX = mimc.F.e(pubX)
+        const _pY = mimc.F.e(pubY)
+        this.accounts.forEach(account => {
+            if (isEqual(_pX, account.pubkeyX) && isEqual(_pY, account.pubkeyY))
+                return account.index;
+        })
+        return -1;
+    }
+
+    #nextIndex() {
+        for (let i = 0; i < this.accounts.length; ++i) {
+            if (isEqual(this.accounts[i].pubkeyX, ZeroPubKeyX) &&
+                isEqual(this.accounts[i].pubkeyY, ZeroPubKeyY))
+                return i;
+        }
+    }
+
     // return index in $row which is the root of empty subtree
-    existEmptySubTreeAt(row) {
+    #existEmptySubTreeAt(row) {
         for (let i = 0; i < this.innerNodes[row].length; ++i) {
             if (isEqual(this.innerNodes[row][i], Empty[this.depth - row])) // 3 - 1 = 2
                 return i;
         }
     }
 
-    // private
     // get proof, proofPos of an inner node (not leaf)
-    getProofInnerNode(row, col) {
+    #getProofInnerNode(row, col) {
         const proof = [];
         const pos = [];
         let idx = col;
@@ -40,9 +56,8 @@ module.exports = class AccountTree extends Tree {
         };
     }
 
-    // private
     // insert $txTree into the tree at $_row and $_col
-    updateSubTree(accTree, _row, _col, mimc) {
+    #updateSubTree(accTree, _row, _col, mimc) {
         let row = _row;
         let col = _col;
         for (let i = 0; i < accTree.depth; ++i) {
@@ -52,18 +67,17 @@ module.exports = class AccountTree extends Tree {
             row += 1;
             col *= 2;
         }
-        
+
         for (let i = 0; i < accTree.accounts.length; ++i) {
-            this.accounts[col+i] = accTree.accounts[i];
+            this.accounts[col + i] = accTree.accounts[i];
         }
 
         this.leafNodes = this.accounts.map(x => x.hash);
 
     }
 
-    // private
-    // re-hashing all the tree after inserting new subtree (after updateSubTree() function)
-    rehashingFromInnerNode(_newValue, row, col, proof, path, mimc) {
+    // re-hashing all the tree after inserting new subtree (after #updateSubTree() function)
+    #rehashingFromInnerNode(_newValue, row, col, proof, path, mimc) {
         let idx = col;
         let newValue = _newValue;
 
@@ -92,22 +106,23 @@ module.exports = class AccountTree extends Tree {
         // assume that all transactions are valid!
         const currentAccountRoot = this.root;
         const newAccount = [];
+        const accountIndexFrom = this.#nextIndex();
         for (let i = 0; i < txDepositTree.txs.length; ++i) {
             if (txDepositTree.txs[i].checkSignature(mimc, eddsa) == false) {
                 console.log(`index ${i} has wrong signature`);
             }
             newAccount.push(new Account(
-                i, txDepositTree.txs[i].toX,
+                accountIndexFrom+i, txDepositTree.txs[i].toX,
                 txDepositTree.txs[i].toY,
                 txDepositTree.txs[i].amount,
                 txDepositTree.txs[i].nonce, mimc));
         }
         const newAccountRootRow = this.depth - txDepositTree.depth;
-        const newAccountRootCol = this.existEmptySubTreeAt(newAccountRootRow);
-        const { proof, pos } = this.getProofInnerNode(newAccountRootRow, newAccountRootCol);
+        const newAccountRootCol = this.#existEmptySubTreeAt(newAccountRootRow);
+        const { proof, pos } = this.#getProofInnerNode(newAccountRootRow, newAccountRootCol);
         const registerAccountTree = new AccountTree(newAccount, mimc);
-        this.updateSubTree(registerAccountTree, newAccountRootRow, newAccountRootCol, mimc);
-        this.rehashingFromInnerNode(registerAccountTree.root, newAccountRootRow, newAccountRootCol, proof, pos, mimc);
+        this.#updateSubTree(registerAccountTree, newAccountRootRow, newAccountRootCol, mimc);
+        this.#rehashingFromInnerNode(registerAccountTree.root, newAccountRootRow, newAccountRootCol, proof, pos, mimc);
         this.root = this.innerNodes[0][0];
 
         return {
@@ -123,25 +138,32 @@ module.exports = class AccountTree extends Tree {
     //public
     // [DEPOSIT EXSITENCE] 
     processDepositExistenceTree(txDepositTree, mimc, eddsa) {
-        /* 
+        const proof = [];
+        const proofPos = [];
+        const intermediateRoot = [];
+        const oldAccountRoot = this.root;
+        txDepositTree.txs.forEach(tx => {
             const receiver = this.findAccountByPubkey(tx.toX, tx.toY);
             const _r_proof = this.getProof(receiver.index);
             const r_existenceProof = _r_proof.proof;
             const r_existenceProofPos = _r_proof.proofPos;
-            const r_nonce = receiver.nonce;
-            const r_balance = receiver.balance;
-
             receiver.acceptReceiveTx(tx.amount, mimc);
             this.leafNodes[receiver.index] = receiver.hash;
             this.rehashingTree(receiver.index, r_existenceProof, r_existenceProofPos, mimc);
             this.root = this.innerNodes[0][0];
 
-            const r_intermediateRoot = this.root;
+            proof.push(r_existenceProof);
+            proofPos.push(r_existenceProofPos);
+            intermediateRoot.push(this.root);
+        })
 
-            return {
-                ...
-            }
-        */
+        return {
+            proof: proof,
+            proofPos: proofPos,
+            oldAccountRoot: oldAccountRoot,
+            intermediateRoot:  intermediateRoot,
+            txDepositTree: txDepositTree
+        }
     }
 
     // public
@@ -216,8 +238,8 @@ module.exports = class AccountTree extends Tree {
 
     findAccountByPubkey(x, y) {
         for (let i = 0; i < this.accounts.length; ++i) {
-            if ((this.accounts[i].pubkeyX == x) &&
-                (this.accounts[i].pubkeyY == y))
+            if (isEqual(this.accounts[i].pubkeyX, x) &&
+                isEqual(this.accounts[i].pubkeyY, y))
                 return this.accounts[i];
         }
     }
@@ -248,6 +270,7 @@ module.exports = class AccountTree extends Tree {
 
     _getAccountAtIndexAsText(mimc, space, index) {
         let str = "<b> 0x" + mimc.F.toString(this.accounts[index].hash, 16).padStart(64, "0") + "</b> <br>";
+        str += space + "------------ [index: " + this.accounts[index].index + "<br>";
         str += space + "------------ [pubX: " + "0x" + mimc.F.toString(this.accounts[index].pubkeyX, 16).padStart(64, "0") + "<br>";
         str += space + "------------ [pubY: " + "0x" + mimc.F.toString(this.accounts[index].pubkeyY, 16).padStart(64, "0") + "<br>";
         str += space + "------------ [balance: " + mimc.F.toString(this.accounts[index].balance) + "<br>";

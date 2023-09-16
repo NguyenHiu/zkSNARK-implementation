@@ -22,8 +22,22 @@ html(lang="en")
             button(type="submit") Submit Deposit Request
         if coordinatorAddress === address
             h1 You are Coordinator! You can update state!
+            p Note; u should process register first to update new account into account tree
             form(action="/process_deposit_register", method="POST")
                 button(type="submit") Process Deposit Register
+            form(action="/process_deposit_existence", method="POST")
+                button(type="submit") Process Deposit Existence
+            h1 debug area
+            h2 deposit register
+            form(action="/debug_deposit_register", method="POST")
+                button(type="submit") access to debug area ? 
+            form(action="/debug_process_deposit_register", method="POST")
+                button(type="submit") process ?
+            h2 deposit existence
+            form(action="/debug_deposit_existence", method="POST")
+                button(type="submit") access to debug area ? 
+            form(action="/debug_process_deposit_existence", method="POST")
+                button(type="submit") process ?
         else
             h1 You are not Coordinator!
         h2 Account Tree

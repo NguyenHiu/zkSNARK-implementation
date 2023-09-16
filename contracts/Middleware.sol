@@ -41,8 +41,10 @@ contract Middleware is DepositRegisterVerifier {
 
     // deposit register variables
     bytes32[] depositAccountRoots;
-    bytes32[] depositTxRoots;
+    bytes32[] depositRegisterTxRoots;
+    bytes32[] depositExistenceTxRoots;
     uint noDepositRegisterTx;
+    uint noDepositExistenceTx;
 
     // Debug events
     event dDebug(bool state);
@@ -65,6 +67,16 @@ contract Middleware is DepositRegisterVerifier {
         bytes32 r8y,
         bytes32 s
     );
+    event eDepositExistence(
+        bytes32 fromX,
+        bytes32 fromY,
+        bytes32 toX,
+        bytes32 toY,
+        uint amount,
+        bytes32 r8x,
+        bytes32 r8y,
+        bytes32 s
+    );
     event sDepositRegister(bool b);
 
     constructor(
@@ -73,6 +85,7 @@ contract Middleware is DepositRegisterVerifier {
     ) {
         mimc = IMiMC(_mimcContractAddress);
         noDepositRegisterTx = 0;
+        noDepositExistenceTx = 0;
         coordinator = msg.sender;
         accountRoots.push(initializationAccountRoot);
     }
@@ -94,7 +107,7 @@ contract Middleware is DepositRegisterVerifier {
         );
 
         if (existedPubkeys[receiverAddress]) {
-            emit dDebug(false);
+            _depositExistence(fromX, fromY, toX, toY, amount, r8x, r8y, s);
         } else {
             existedPubkeys[receiverAddress] = true;
             _depositRegister(fromX, fromY, toX, toY, amount, r8x, r8y, s);
@@ -147,13 +160,51 @@ contract Middleware is DepositRegisterVerifier {
             depositAccountRoots.pop();
             tmp1 = mimcMultiHash(inputArray);
 
-            inputArray[0] = uint(depositTxRoots[depositTxRoots.length - 1]);
+            inputArray[0] = uint(depositRegisterTxRoots[depositRegisterTxRoots.length - 1]);
             inputArray[1] = tmp2;
-            depositTxRoots.pop();
+            depositRegisterTxRoots.pop();
             tmp2 = mimcMultiHash(inputArray);
         }
         depositAccountRoots.push(bytes32(tmp1));
-        depositTxRoots.push(bytes32(tmp2));
+        depositRegisterTxRoots.push(bytes32(tmp2));
+    }
+
+    function _depositExistence(
+        bytes32 fromX,
+        bytes32 fromY,
+        bytes32 toX,
+        bytes32 toY,
+        uint amount,
+        bytes32 r8x,
+        bytes32 r8y,
+        bytes32 s
+    ) public {
+        noDepositExistenceTx += 1;
+
+        // create a new tx
+        uint[] memory txPropertes = new uint[](6);
+        txPropertes[0] = uint(fromX);
+        txPropertes[1] = uint(fromY);
+        txPropertes[2] = uint(toX);
+        txPropertes[3] = uint(toY);
+        txPropertes[4] = 0;
+        txPropertes[5] = amount;
+        uint newTxHash = uint(mimcMultiHash(txPropertes));
+
+        emit eDepositExistence(fromX, fromY, toX, toY, amount, r8x, r8y, s);
+
+        // re-hash root
+        uint tmp = newTxHash;
+        uint _noTx = noDepositExistenceTx;
+        while (_noTx % 2 == 0) {
+            _noTx /= 2;
+            uint[] memory inputArray = new uint[](2);
+            inputArray[0] = uint(depositExistenceTxRoots[depositExistenceTxRoots.length - 1]);
+            inputArray[1] = tmp;
+            depositExistenceTxRoots.pop();
+            tmp = mimcMultiHash(inputArray);
+        }
+        depositExistenceTxRoots.push(bytes32(tmp));
     }
 
     function getDepositRegisterRoot() public {
@@ -167,7 +218,7 @@ contract Middleware is DepositRegisterVerifier {
         uint[4] calldata _pubSignals
     ) public { 
         require(
-            depositTxRoots[0] == bytes32(_pubSignals[0]),
+            depositRegisterTxRoots[0] == bytes32(_pubSignals[0]),
             "Deposit Transactions are invalid!"
         );
         require(
@@ -181,11 +232,11 @@ contract Middleware is DepositRegisterVerifier {
 
         require(this.verifyProof(_pA, _pB, _pC, _pubSignals));
         accountRoots.push(bytes32(_pubSignals[3]));
-        for (uint8 i = 0; i < depositTxRoots.length - 1; i++) {
-            depositTxRoots[i] = depositTxRoots[i + 1];
+        for (uint8 i = 0; i < depositRegisterTxRoots.length - 1; i++) {
+            depositRegisterTxRoots[i] = depositRegisterTxRoots[i + 1];
             depositAccountRoots[i] = depositAccountRoots[i + 1];
         }
-        depositTxRoots.pop();
+        depositRegisterTxRoots.pop();
         depositAccountRoots.pop();
         noDepositRegisterTx -= 4;
         emit sDepositRegister(true);

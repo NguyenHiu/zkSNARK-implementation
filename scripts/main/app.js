@@ -100,6 +100,7 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
 
     // deposit register transactions
     let depositRegisterTxs = [];
+    let depositExistenceTxs = [];
 
     // listeners
     middleware.on(
@@ -114,8 +115,24 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
             if (newTx.checkSignature(mimcjs, eddsa) == false)
                 console.log("[ERROR] Event check signature is wrong");
             else {
-                console.log("[DEPOSIT SUCCESSFULLY]");
+                console.log("[DEPOSIT Register SUCCESSFULLY]");
                 depositRegisterTxs.push(newTx);
+            }
+        })
+    middleware.on(
+        "eDepositExistence(bytes32,bytes32,bytes32,bytes32,uint,bytes32,bytes32,bytes32)",
+        (fromX, fromY, toX, toY, amount, R8X, R8Y, S) => {
+            const newTx = new Transaction(
+                mimcjs.F.e(fromX, 16), mimcjs.F.e(fromY, 16),
+                mimcjs.F.e(toX, 16), mimcjs.F.e(toY, 16),
+                mimcjs.F.e(0), mimcjs.F.e(amount),
+                mimcjs.F.e(R8X, 16), mimcjs.F.e(R8Y, 16), BigInt(S, 16), mimcjs
+            );
+            if (newTx.checkSignature(mimcjs, eddsa) == false)
+                console.log("[ERROR] Event check signature is wrong");
+            else {
+                console.log("[DEPOSIT Exitence SUCCESSFULLY]");
+                depositExistenceTxs.push(newTx);
             }
         })
     middleware.on("sDepositRegister(bool)", (x) => { console.log("[UPDATE STATE SUCCESSFULLY]"); })
@@ -186,8 +203,6 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
     })
     // create a transaction
     app.post('/main', restrict, function (req, res) {
-        // check exist account?
-
         const fromX = hex2Uint8Array(req.session.user.pubkeyX);
         const fromY = hex2Uint8Array(req.session.user.pubkeyY);
         const toX = hex2Uint8Array("0x" + req.body.toPublicKey.slice(4, 68));
@@ -268,6 +283,40 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
                 gasLimit: 500000
             });
     });
+    app.post('/process_deposit_existence', isCoordinator, async function (req, res) {
+        // get 2^x transactions
+        const noTx = 2 ** Math.floor(Math.log2(depositExistenceTxs.length));
+        const txs = depositExistenceTxs.slice(0, noTx);
+        depositExistenceTxs = depositExistenceTxs.slice(noTx);
+
+        // process 2^x transactions into account tree
+        const depositExistenceTree = new TxTree(txs, mimcjs);
+        const state = accountTree.processDepositExistenceTree(depositExistenceTree, mimcjs, eddsa);
+        // const _proof = getDepositExistenceInputCircuit(state, mimcjs);
+
+        // fs.writeFile(
+        //     "build/inputs/1_test_deposit_register_proof.json",
+        //     JSON.stringify(_proof),
+        //     'utf-8',
+        //     () => { });
+
+        // // generate proof
+        // const wasm = "build/circuits/deposit_register_verifier/deposit_register_verifier_js/deposit_register_verifier.wasm";
+        // const zkey = "build/circuits/deposit_register_verifier/deposit_register_verifier_1.zkey"
+        // const { proof, publicSignals } = await snarkjs.groth16.fullProve(_proof, wasm, zkey);
+        // const rawCallData = await snarkjs.groth16.exportSolidityCallData(proof, publicSignals);
+        // const jsonCallData = JSON.parse("[" + rawCallData + "]")
+
+        // // send onchain
+        // middleware.verifyProof_DepositRegister(
+        //     jsonCallData[0], jsonCallData[1],
+        //     jsonCallData[2], jsonCallData[3],
+        //     {
+        //         from: coordinatorWallet.address,
+        //         value: 0,
+        //         gasLimit: 500000
+        //     });
+    });
 
     app.get("/accountTree", function (req, res) {
         res.render("accountTree", {
@@ -276,15 +325,15 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
     })
 
     /*  DEBUG AREA */
-    app.post("/debug", function (req, res) {
-        req.session.user = createUserL2(5, privateKeys[5], mimcjs, eddsa);
+    app.post("/debug_deposit_register", function (req, res) {
+        req.session.user = createUserL2(0, privateKeys[0], mimcjs, eddsa);
         const fromX = hex2Uint8Array(req.session.user.pubkeyX);
         const fromY = hex2Uint8Array(req.session.user.pubkeyY);
         for (let i = 0; i < 5; ++i) {
             const user = createUserL2(i + 1, privateKeys[i + 1], mimcjs, eddsa);
             const toX = hex2Uint8Array(user.pubkeyX);
             const toY = hex2Uint8Array(user.pubkeyY);
-            const amount = 0;
+            const amount = 10;
             const tx = new Transaction(
                 mimcjs.F.e(fromX), mimcjs.F.e(fromY),
                 mimcjs.F.e(toX), mimcjs.F.e(toY),
@@ -308,7 +357,7 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
                     deposit(
                         c(fromX), c(fromY),
                         c(toX), c(toY),
-                        0, c(R8X), c(R8Y), S,
+                        amount, c(R8X), c(R8Y), S,
                         {
                             from: req.session.user.l1Address,
                             value: 0,
@@ -316,9 +365,9 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
                         });
             }
         }
-        res.redirect("/login");
+        res.redirect("/main");
     });
-    app.post("/debug_process", async function (req, res) {
+    app.post("/debug_process_deposit_register", async function (req, res) {
         const noTx = 2 ** Math.floor(Math.log2(depositRegisterTxs.length));
         const txs = depositRegisterTxs.slice(0, noTx);
         depositRegisterTxs = depositRegisterTxs.slice(noTx);
@@ -347,6 +396,82 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
                 value: 0,
                 gasLimit: 500000
             }).then(x => console.log);
+    });
+    app.post("/debug_deposit_existence", function (req, res) {
+        req.session.user = createUserL2(0, privateKeys[0], mimcjs, eddsa);
+        const fromX = hex2Uint8Array(req.session.user.pubkeyX);
+        const fromY = hex2Uint8Array(req.session.user.pubkeyY);
+        for (let i = 0; i < 5; ++i) {
+            const user = createUserL2(i + 1, privateKeys[i + 1], mimcjs, eddsa);
+            const toX = hex2Uint8Array(user.pubkeyX);
+            const toY = hex2Uint8Array(user.pubkeyY);
+            const amount = 10;
+            const tx = new Transaction(
+                mimcjs.F.e(fromX), mimcjs.F.e(fromY),
+                mimcjs.F.e(toX), mimcjs.F.e(toY),
+                mimcjs.F.e(0), mimcjs.F.e(amount),
+                0, 0, 0, mimcjs);
+            tx.signTxHash(hex2Uint8Array(req.session.user.prvkey), mimcjs, eddsa);
+
+            const c = (x) => {
+                return "0x" + mimcjs.F.toString(x, 16).padStart(64, "0");
+            }
+
+            if (tx.checkSignature(mimcjs, eddsa) == false) {
+                console.log("[ERROR] SIGNTURE IS WRONG!");
+            }
+            else {
+                console.log("[Sent Transaction]");
+                const R8X = tx.R8X;
+                const R8Y = tx.R8Y;
+                const S = "0x" + tx.S.toString(16).padStart(64, "0");
+                middleware.connect(provider.getSigner(req.session.user.index)).
+                    deposit(
+                        c(fromX), c(fromY),
+                        c(toX), c(toY),
+                        amount, c(R8X), c(R8Y), S,
+                        {
+                            from: req.session.user.l1Address,
+                            value: 0,
+                            gasLimit: 300000
+                        });
+            }
+        }
+        res.redirect("/main");
+    });
+    app.post("/debug_process_deposit_existence", async function (req, res) {
+        // get 2^x transactions
+        const noTx = 2 ** Math.floor(Math.log2(depositExistenceTxs.length));
+        const txs = depositExistenceTxs.slice(0, noTx);
+        depositExistenceTxs = depositExistenceTxs.slice(noTx);
+
+        // process 2^x transactions into account tree
+        const depositExistenceTree = new TxTree(txs, mimcjs);
+        const state = accountTree.processDepositExistenceTree(depositExistenceTree, mimcjs, eddsa);
+        // const _proof = getDepositExistenceInputCircuit(state, mimcjs);
+
+        // fs.writeFile(
+        //     "build/inputs/1_test_deposit_register_proof.json",
+        //     JSON.stringify(_proof),
+        //     'utf-8',
+        //     () => { });
+
+        // // generate proof
+        // const wasm = "build/circuits/deposit_register_verifier/deposit_register_verifier_js/deposit_register_verifier.wasm";
+        // const zkey = "build/circuits/deposit_register_verifier/deposit_register_verifier_1.zkey"
+        // const { proof, publicSignals } = await snarkjs.groth16.fullProve(_proof, wasm, zkey);
+        // const rawCallData = await snarkjs.groth16.exportSolidityCallData(proof, publicSignals);
+        // const jsonCallData = JSON.parse("[" + rawCallData + "]")
+
+        // // send onchain
+        // middleware.verifyProof_DepositRegister(
+        //     jsonCallData[0], jsonCallData[1],
+        //     jsonCallData[2], jsonCallData[3],
+        //     {
+        //         from: coordinatorWallet.address,
+        //         value: 0,
+        //         gasLimit: 500000
+        //     });
     });
     return app;
 }) 

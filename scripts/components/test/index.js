@@ -18,10 +18,9 @@ async function run() {
     const mimc = await buildMimc7();
     const eddsa = await buildEddsa();
 
-    let x = 10;
-    console.log(mimc.F.toString(x));
-    console.log(mimc.F.e(x));
-    console.log(mimc.F.toString(mimc.F.e(x)));
+    const ten = mimc.F.e(10);
+    console.log(ten);
+    console.log(BigInt(mimc.F.toString(ten))+BigInt(mimc.F.toString(ten)));
 
     // const A_privateKey = uint8Array2Hex(new Uint8Array(new Array(32).fill(0)));
     // const B_privateKey = uint8Array2Hex(new Uint8Array(new Array(32).fill(1)));

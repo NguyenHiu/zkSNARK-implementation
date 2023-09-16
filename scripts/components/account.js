@@ -15,7 +15,7 @@ module.exports = class Account {
 
     hashAccount(mimc) {
         const accountHash = mimc.multiHash([
-            mimc.F.toString(this.pubkeyX), 
+            mimc.F.toString(this.pubkeyX),
             mimc.F.toString(this.pubkeyY),
             mimc.F.toString(this.balance),
             mimc.F.toString(this.nonce)
@@ -24,18 +24,13 @@ module.exports = class Account {
     }
 
     acceptSendTx(_amount, mimc) {
-        if (this.index > 0) {
-            this.balance -= _amount;
-            this.nonce += 1;
-            this.hash = this.hashAccount(mimc);
-        }
+        this.balance -= _amount;
+        this.nonce += 1;
+        this.hash = this.hashAccount(mimc);
     }
 
     acceptReceiveTx(_amount, mimc) {
-        // if this.index == 0, then this is zero-account (deposit)
-        if (this.index > 0) {
-            this.balance += _amount;
-            this.hash = this.hashAccount(mimc);
-        }
+        this.balance = mimc.F.e(BigInt(mimc.F.toString(this.balance)) + BigInt(mimc.F.toString(_amount)));
+        this.hash = this.hashAccount(mimc);
     }
 }
