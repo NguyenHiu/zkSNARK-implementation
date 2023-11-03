@@ -11,7 +11,7 @@
     "multer": "^1.4.5-lts.1",
     "nodemon": "^3.0.1",
     "pug": "^3.0.2",
-    "snarkjs": "^0.7.0"
+    "snarkjs": "^0.7.1"
   },
   "scripts": {
     "start": "nodemon scripts/main/server.js --ignore build"

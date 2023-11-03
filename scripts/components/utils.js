@@ -162,14 +162,74 @@ exports.getDepositRegisterInputCircuit = function (state, mimc) {
 }
 
 exports.getDepositExistenceInputCircuit = function(state, mimc) {
-    
+    /*
+        return {
+            proof: proof,
+            proofPos: proofPos,
+            oldAccountRoot: oldAccountRoot,
+            intermediateRoot:  intermediateRoot,
+            txDepositTree: txDepositTree
+        }
+    */
+    const txDepositTree = state.txDepositTree;
+    const txs = txDepositTree.txs;
+    const noTx = txs.length;
+
+    // check valid transaction (valid signature)
+    const senderPubkeyX = new Array(noTx);
+    const senderPubkeyY = new Array(noTx);
+    const receiverPubkeyX = new Array(noTx);
+    const receiverPubkeyY = new Array(noTx);
+    const amount = new Array(noTx);
+    const R8X = new Array(noTx);
+    const R8Y = new Array(noTx);
+    const S = new Array(noTx);
+    const proofTxExist = new Array(noTx);
+    const proofPosTxExist = new Array(noTx);
+    const intermediateRoots = new Array(noTx);
+
+    for (let i = 0; i < noTx; ++i) {
+        senderPubkeyX[i] = mimc.F.toString(txs[i].fromX);
+        senderPubkeyY[i] = mimc.F.toString(txs[i].fromY);
+        receiverPubkeyX[i] = mimc.F.toString(txs[i].toX);
+        receiverPubkeyY[i] = mimc.F.toString(txs[i].toY);
+        amount[i] = mimc.F.toString(txs[i].amount);
+        R8X[i] = mimc.F.toString(txs[i].R8X);
+        R8Y[i] = mimc.F.toString(txs[i].R8Y);
+        S[i] = txs[i].S.toString();
+
+        const { proof, proofPos } = txDepositTree.getProof(i);
+        const _convertProof = [];
+        proof.map(x => _convertProof.push(mimc.F.toString(x)));
+        proofTxExist[i] = _convertProof;
+        proofPosTxExist[i] = proofPos;
+        intermediateRoots[i] = mimc.F.toString(state.intermediateRoot[i]);
+    }
+
+    return {
+        oldAccountRoot: mimc.F.toString(state.oldAccountRoot),
+        depositExistenceRoot: mimc.F.toString(state.txDepositTree.root),
+        // registerAccountRoot: mimc.F.toString(state.registerAccountTree.root),
+
+        intermediateRoot: intermediateRoots,
+        senderPubkeyX: senderPubkeyX,
+        senderPubkeyY: senderPubkeyY,
+        receiverPubkeyX: receiverPubkeyX,
+        receiverPubkeyY: receiverPubkeyY,
+        amount: amount,
+        R8X: R8X,
+        R8Y: R8Y,
+        S: S,
+        proofTxExist: proofTxExist,
+        proofPosTxExist: proofPosTxExist
+    }
 }
 
-exports.getDepositExistenceInputCircuit = function (processState) {
+exports.getTransferInputCircuit = function (processState) {
     /* 
     processState {
-        currentAccountRoot: currentAccountRoot,
-        txRree: txTree,
+        currentAccountRoot:  x`,
+        txTree: txTree,
         txProofs: txExistenceProofs,
         txProofPos: txExistenceProofPos,
         txDetails: txDetails

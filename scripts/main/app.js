@@ -9,6 +9,7 @@ const snarkjs = require("snarkjs");
 const fs = require("fs");
 const {
     getDepositRegisterInputCircuit,
+    getDepositExistenceInputCircuit,
     createUserL2,
     uint8Array2Hex,
     hex2Uint8Array,
@@ -61,6 +62,7 @@ async function InitState() {
     await middleware.deployTransaction.wait();
 
     // Edwards-Curve Digital Signature Algorithm
+    // build eddsa instance in js app server
     const eddsa = await buildEddsa();
 
     return {
@@ -199,6 +201,8 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
             address: req.session.user.l1Address,
             privateKey: req.session.user.originalPrvkey,
             coordinatorAddress: coordinatorAddress,
+            depositRegisterTxs: depositRegisterTxs,
+            depositExistenceTxs: depositExistenceTxs,
         });
     })
     // create a transaction
@@ -252,7 +256,9 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
     app.post('/process_deposit_register', isCoordinator, async function (req, res) {
         // get 2^x transactions
         const noTx = 2 ** Math.floor(Math.log2(depositRegisterTxs.length));
+        // get item before 2^x index for processing
         const txs = depositRegisterTxs.slice(0, noTx);
+        // get item after 2^x index for next process
         depositRegisterTxs = depositRegisterTxs.slice(noTx);
 
         // process 2^x transactions into account tree
@@ -292,13 +298,13 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
         // process 2^x transactions into account tree
         const depositExistenceTree = new TxTree(txs, mimcjs);
         const state = accountTree.processDepositExistenceTree(depositExistenceTree, mimcjs, eddsa);
-        // const _proof = getDepositExistenceInputCircuit(state, mimcjs);
+        const _proof = getDepositExistenceInputCircuit(state);
 
-        // fs.writeFile(
-        //     "build/inputs/1_test_deposit_register_proof.json",
-        //     JSON.stringify(_proof),
-        //     'utf-8',
-        //     () => { });
+        fs.writeFile(
+            "build/inputs/1_test_deposit_existence_proof.json",
+            JSON.stringify(_proof),
+            'utf-8',
+            () => { });
 
         // // generate proof
         // const wasm = "build/circuits/deposit_register_verifier/deposit_register_verifier_js/deposit_register_verifier.wasm";
@@ -367,7 +373,7 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
         }
         res.redirect("/main");
     });
-    app.post("/debug_process_deposit_register", async function (req, res) {
+        app.post("/debug_process_deposit_register", async function (req, res) {
         const noTx = 2 ** Math.floor(Math.log2(depositRegisterTxs.length));
         const txs = depositRegisterTxs.slice(0, noTx);
         depositRegisterTxs = depositRegisterTxs.slice(noTx);
@@ -448,13 +454,13 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
         // process 2^x transactions into account tree
         const depositExistenceTree = new TxTree(txs, mimcjs);
         const state = accountTree.processDepositExistenceTree(depositExistenceTree, mimcjs, eddsa);
-        // const _proof = getDepositExistenceInputCircuit(state, mimcjs);
+        const _proof = getDepositExistenceInputCircuit(state, mimcjs);
 
-        // fs.writeFile(
-        //     "build/inputs/1_test_deposit_register_proof.json",
-        //     JSON.stringify(_proof),
-        //     'utf-8',
-        //     () => { });
+        fs.writeFile(
+            "build/inputs/1_test_deposit_existence_proof.json",
+            JSON.stringify(_proof),
+            'utf-8',
+            () => { });
 
         // // generate proof
         // const wasm = "build/circuits/deposit_register_verifier/deposit_register_verifier_js/deposit_register_verifier.wasm";

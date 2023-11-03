@@ -18,6 +18,7 @@ module.exports = class AccountTree extends Tree {
         return -1;
     }
 
+    // private
     #nextIndex() {
         for (let i = 0; i < this.accounts.length; ++i) {
             if (isEqual(this.accounts[i].pubkeyX, ZeroPubKeyX) &&
@@ -143,6 +144,11 @@ module.exports = class AccountTree extends Tree {
         const intermediateRoot = [];
         const oldAccountRoot = this.root;
         txDepositTree.txs.forEach(tx => {
+            // check signature
+            if (tx.checkSignature(mimc, eddsa) == false) {
+                console.log(`wrong signature`); 
+            }
+            // receiver
             const receiver = this.findAccountByPubkey(tx.toX, tx.toY);
             const _r_proof = this.getProof(receiver.index);
             const r_existenceProof = _r_proof.proof;
@@ -237,11 +243,13 @@ module.exports = class AccountTree extends Tree {
     }
 
     findAccountByPubkey(x, y) {
-        for (let i = 0; i < this.accounts.length; ++i) {
+        for (let i = 0; i < this.accounts.length; ++i) {            
             if (isEqual(this.accounts[i].pubkeyX, x) &&
-                isEqual(this.accounts[i].pubkeyY, y))
-                return this.accounts[i];
+            isEqual(this.accounts[i].pubkeyY, y)){
+                return this.accounts[i]
+            }
         }
+        console.log("findAccountByPubkey: account not found")
     }
 
     // front-end func

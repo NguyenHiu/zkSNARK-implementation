@@ -9,6 +9,8 @@ html(lang="en")
         h2 welcome, 
         p your address: #{address}
         p your private key: #{privateKey}
+        p deposit register txs: #{depositRegisterTxs}
+        p deposit existence txs: #{depositExistenceTxs}
         h3 Deposit 
         form(action="/main", method="POST")
             div 
