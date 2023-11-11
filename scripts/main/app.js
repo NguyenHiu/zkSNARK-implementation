@@ -202,12 +202,15 @@ exports.appPromise = InitState().then(function ({ accountTree, provider, mimcjs,
         });
     })
     // create a transaction
+    // from, to, amount
     app.post('/main', restrict, function (req, res) {
         const fromX = hex2Uint8Array(req.session.user.pubkeyX);
         const fromY = hex2Uint8Array(req.session.user.pubkeyY);
-        const toX = hex2Uint8Array("0x" + req.body.toPublicKey.slice(4, 68));
-        const toY = hex2Uint8Array("0x" + req.body.toPublicKey.slice(68));
-        const amount = req.body.amount;
+        const tY = hex2Uint8Array("0x" + req.body.toPublicKey.slice(68));
+        const amoX = hex2Uint8Array("0x" + req.body.toPublicKey.slice(4, 68));
+        const toount = req.body.amount;
+        // mimcjs.F.e: any --> mimc's format 
+        // mimcjs.F.toString: mimc's format --> string (hex, bigint)
         const tx = new Transaction(
             mimcjs.F.e(fromX), mimcjs.F.e(fromY),
             mimcjs.F.e(toX), mimcjs.F.e(toY),

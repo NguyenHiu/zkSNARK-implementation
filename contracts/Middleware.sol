@@ -111,6 +111,19 @@ contract Middleware is DepositRegisterVerifier {
         } else {
             existedPubkeys[receiverAddress] = true;
             _depositRegister(fromX, fromY, toX, toY, amount, r8x, r8y, s);
+            // 1. Tao account
+            // 2. Chuyen tien vao account do
+            // Thoi gian: mat 1 khoang thoi gian de tao account
+            //  Thoi gian roll-up: sau 1 so luong tx nhat dinh thi se rollup 1 lan
+            //  state (old) --X--rollup--> state (new)
+            //
+            // Deposit, transfer, withdraw
+            //      Truoc khi rollup, tap nhung transactions:
+            //              1. Deposit Register Transactions    --> Tao account
+            //              2. Deposit Existence Transactions   --> Accept
+            //              3. Transfer --> Accept
+            //              4. Withdraw --> Accept
+            //
         }
     }
 
@@ -160,7 +173,9 @@ contract Middleware is DepositRegisterVerifier {
             depositAccountRoots.pop();
             tmp1 = mimcMultiHash(inputArray);
 
-            inputArray[0] = uint(depositRegisterTxRoots[depositRegisterTxRoots.length - 1]);
+            inputArray[0] = uint(
+                depositRegisterTxRoots[depositRegisterTxRoots.length - 1]
+            );
             inputArray[1] = tmp2;
             depositRegisterTxRoots.pop();
             tmp2 = mimcMultiHash(inputArray);
@@ -199,7 +214,9 @@ contract Middleware is DepositRegisterVerifier {
         while (_noTx % 2 == 0) {
             _noTx /= 2;
             uint[] memory inputArray = new uint[](2);
-            inputArray[0] = uint(depositExistenceTxRoots[depositExistenceTxRoots.length - 1]);
+            inputArray[0] = uint(
+                depositExistenceTxRoots[depositExistenceTxRoots.length - 1]
+            );
             inputArray[1] = tmp;
             depositExistenceTxRoots.pop();
             tmp = mimcMultiHash(inputArray);
@@ -216,7 +233,7 @@ contract Middleware is DepositRegisterVerifier {
         uint[2][2] calldata _pB,
         uint[2] calldata _pC,
         uint[4] calldata _pubSignals
-    ) public { 
+    ) public {
         require(
             depositRegisterTxRoots[0] == bytes32(_pubSignals[0]),
             "Deposit Transactions are invalid!"
