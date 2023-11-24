@@ -10,13 +10,13 @@ template Main(D, d) {
     /* Signals */
     // Public Signals
     signal input depositExistenceRoot;
-    signal input registerAccountRoot;
     signal input oldAccountRoot;
 
     // Private Signals
+    signal input accountHashValues[noNewAccount];
+    signal input proofAcc[noNewAccount][d];
+    signal input proofPosAcc[noNewAccount][d];
     signal input intermediateRoot[noNewAccount];
-    signal input proofIntermediateRoot[noNewAccount][d];
-    signal input proofPosIntermediateRoot[noNewAccount][d];
 
     signal input senderPubkeyX[noNewAccount];
     signal input senderPubkeyY[noNewAccount];
@@ -48,6 +48,7 @@ template Main(D, d) {
     component converter[noNewAccount];
     component msghash[noNewAccount];
     component proofExistTxHash[noNewAccount][d];
+    component accountHash[noNewAccount];
     component intermediateRootCheck[noNewAccount][d];
     for (var i = 0; i < noNewAccount; i++) {
         // hash transaction
@@ -89,8 +90,8 @@ template Main(D, d) {
         // check intermediate account root
         for (var j = 0; j < d; j++){
             intermediateRootCheck[i][j] = MultiMiMC7(2, 91);
-            intermediateRootCheck[i][j].in[0] <== proofIntermediateRoot[i][j] + proofPosIntermediateRoot[i][j] * (((j == 0) ? msghash[i].out : intermediateRootCheck[i][j-1].out) - proofIntermediateRoot[i][j]);
-            intermediateRootCheck[i][j].in[1] <== ((j == 0) ? msghash[i].out : intermediateRootCheck[i][j-1].out) +  proofPosIntermediateRoot[i][j] * (proofIntermediateRoot[i][j] - ((j == 0) ? msghash[i].out : intermediateRootCheck[i][j-1].out));
+            intermediateRootCheck[i][j].in[0] <== proofAcc[i][j] + proofPosAcc[i][j] * (((j == 0) ? accountHashValues[i] : intermediateRootCheck[i][j-1].out) - proofAcc[i][j]);
+            intermediateRootCheck[i][j].in[1] <== ((j == 0) ? accountHashValues[i] : intermediateRootCheck[i][j-1].out) +  proofPosAcc[i][j] * (proofAcc[i][j] - ((j == 0) ? accountHashValues[i] : intermediateRootCheck[i][j-1].out));
             intermediateRootCheck[i][j].k <== 2;
         }
         intermediateRootCheck[i][d-1].out === intermediateRoot[i];
@@ -98,4 +99,4 @@ template Main(D, d) {
 }
 
 
-component main {public [registerAccountRoot, oldAccountRoot, depositExistenceRoot]}  = Main(3, 2);
+component main {public [oldAccountRoot, depositExistenceRoot]}  = Main(3, 2);

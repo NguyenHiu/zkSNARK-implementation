@@ -10,11 +10,11 @@ if [ ! -d "$BUILD_DIR" ]; then
     mkdir -p "$BUILD_DIR"
 fi
 
-# echo "****COMPILING CIRCUIT****"
-# start=`date +%s`
-# circom "$CIRCUIT_NAME".circom --r1cs --wasm --sym --c --wat --output "$BUILD_DIR"
-# end=`date +%s`
-# echo "DONE ($((end-start))s)"
+echo "****COMPILING CIRCUIT****"
+start=`date +%s`
+circom "$CIRCUIT_NAME".circom --r1cs --wasm --sym --c --wat --output "$BUILD_DIR"
+end=`date +%s`
+echo "DONE ($((end-start))s)"
 
 echo "****GENERATING WITNESS FOR SAMPLE INPUT****"
 start=`date +%s`

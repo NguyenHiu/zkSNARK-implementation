@@ -164,10 +164,11 @@ exports.getDepositRegisterInputCircuit = function (state, mimc) {
 exports.getDepositExistenceInputCircuit = function(state, mimc) {
     /*
         return {
-            proof: proof,
-            proofPos: proofPos,
+            proofAcc: proofAcc,
+            proofPosAcc: proofPosAcc,
+            accountHashValues: accountHashValues,
+            intermediateRoots: intermediateRoot,
             oldAccountRoot: oldAccountRoot,
-            intermediateRoot:  intermediateRoot,
             txDepositTree: txDepositTree
         }
     */
@@ -186,6 +187,10 @@ exports.getDepositExistenceInputCircuit = function(state, mimc) {
     const S = new Array(noTx);
     const proofTxExist = new Array(noTx);
     const proofPosTxExist = new Array(noTx);
+    // for account check (intermediateRoots)
+    const proofAcc = new Array(noTx);
+    const proofPosAcc = new Array(noTx);
+    const accountHashValues = new Array(noTx);
     const intermediateRoots = new Array(noTx);
 
     for (let i = 0; i < noTx; ++i) {
@@ -199,19 +204,28 @@ exports.getDepositExistenceInputCircuit = function(state, mimc) {
         S[i] = txs[i].S.toString();
 
         const { proof, proofPos } = txDepositTree.getProof(i);
-        const _convertProof = [];
-        proof.map(x => _convertProof.push(mimc.F.toString(x)));
-        proofTxExist[i] = _convertProof;
+        const _convertProofTx = [];
+        proof.map(x => _convertProofTx.push(mimc.F.toString(x)));
+        proofTxExist[i] = _convertProofTx;
         proofPosTxExist[i] = proofPos;
-        intermediateRoots[i] = mimc.F.toString(state.intermediateRoot[i]);
+
+        // for account check (intermediateRoots)
+        const _convertProofacc = [];
+        state.proofAcc.map(x => _convertProofacc.push(mimc.F.toString(x)));
+        proofAcc[i] = _convertProofacc;
+        proofPosAcc[i] = state.proofPosAcc[i];
+        accountHashValues[i] = state.accountHashValues[i];
+        intermediateRoots[i] = mimc.F.toString(state.intermediateRoots[i]);
     }
 
     return {
-        oldAccountRoot: mimc.F.toString(state.oldAccountRoot),
         depositExistenceRoot: mimc.F.toString(state.txDepositTree.root),
-        // registerAccountRoot: mimc.F.toString(state.registerAccountTree.root),
+        oldAccountRoot: mimc.F.toString(state.oldAccountRoot),
+        accountHashValues: accountHashValues,
+        proofAcc: proofAcc,
+        proofPosAcc: proofPosAcc,
+        intermediateRoots: intermediateRoots,
 
-        intermediateRoot: intermediateRoots,
         senderPubkeyX: senderPubkeyX,
         senderPubkeyY: senderPubkeyY,
         receiverPubkeyX: receiverPubkeyX,

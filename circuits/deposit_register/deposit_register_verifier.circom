@@ -84,7 +84,7 @@ template Main(D, d) {
         cal intermediate account root (merkle proof) 
         compare intermediate account root 
         */
-}
+    }
 
     /* Exist Empty Sub for new Account Tree ?  */
     component existSubTreeHash[D_d];

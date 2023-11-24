@@ -23,6 +23,8 @@ module.exports =
             }
         }
 
+        // get proof of a leaf node
+        // return proof and proof position of a leaf node to root
         getProof(_index) {
             const proof = [];
             const proofPos = [];

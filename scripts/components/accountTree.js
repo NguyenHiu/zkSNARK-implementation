@@ -139,35 +139,47 @@ module.exports = class AccountTree extends Tree {
     //public
     // [DEPOSIT EXSITENCE] 
     processDepositExistenceTree(txDepositTree, mimc, eddsa) {
-        const proof = [];
-        const proofPos = [];
+        const proofAcc = [];
+        const proofPosAcc = [];
+        const accountHashValues = [];
         const intermediateRoot = [];
         const oldAccountRoot = this.root;
+        // Get Current Proof
+        // const firstIdx = this.findAccountByPubkey(txDepositTree.txs[0].toX, txDepositTree.txs[0].toX)
+        var currentProof = this.getProof(1);
         txDepositTree.txs.forEach(tx => {
             // check signature
             if (tx.checkSignature(mimc, eddsa) == false) {
                 console.log(`wrong signature`); 
             }
-            // receiver
+            // process receiver
+            // prepare proof for accounts: intermediateRoot
+            // FLOW: update receiver -> update tree -> get proof of new state receiver -> return proof + intermediateRoot
+            // 1. update receiver
             const receiver = this.findAccountByPubkey(tx.toX, tx.toY);
-            const _r_proof = this.getProof(receiver.index);
-            const r_existenceProof = _r_proof.proof;
-            const r_existenceProofPos = _r_proof.proofPos;
-            receiver.acceptReceiveTx(tx.amount, mimc);
+            receiver.acceptReceiveTx(tx.amount, mimc); //update balance and re-hash
+            // 2. update tree
             this.leafNodes[receiver.index] = receiver.hash;
-            this.rehashingTree(receiver.index, r_existenceProof, r_existenceProofPos, mimc);
+            this.rehashingTree(receiver.index, currentProof.proof, currentProof.proofPos, mimc);
+            // 3. get proof of new state receiver
+            currentProof = this.getProof(receiver.index); // get proof of receiver (new state after update receiver)
+            // 4. return proof + intermediateRoot
             this.root = this.innerNodes[0][0];
-
-            proof.push(r_existenceProof);
-            proofPos.push(r_existenceProofPos);
             intermediateRoot.push(this.root);
+            proofAcc.push(currentProof.proof);
+            proofPosAcc.push(currentProof.proofPos);
+            accountHashValues.push(mimc.F.toString(receiver.hash));
+
+            // prepare proof for checking transactions
+            // TODO: here
         })
 
         return {
-            proof: proof,
-            proofPos: proofPos,
+            proofAcc: proofAcc,
+            proofPosAcc: proofPosAcc,
+            accountHashValues: accountHashValues,
+            intermediateRoots: intermediateRoot,
             oldAccountRoot: oldAccountRoot,
-            intermediateRoot:  intermediateRoot,
             txDepositTree: txDepositTree
         }
     }
