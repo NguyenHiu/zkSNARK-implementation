@@ -161,8 +161,62 @@ exports.getDepositRegisterInputCircuit = function (state, mimc) {
     }
 }
 
-exports.getDepositExistenceInputCircuit = function(state, mimc) {
-    
+exports.getWithdrawInputCircuit = function (state, mimc) {
+    txExistsProofs = [];
+    txExistsProofsPos = [];
+    intermediateRoots = [];
+    sendersExistsProof = [];
+    sendersExistsProofPos = [];
+    sendersPukeyX = [];
+    sendersPukeyY = [];
+    sendersNonce = [];
+    sendersBalance = [];
+    txsAmount = [];
+    txsR8x = [];
+    txsR8y = [];
+    txsS = [];
+
+    for (idx = 0; idx < state.withdrawTree.txs.length; ++idx) {
+        txExistenceProof.push(state.proofTxExists[idx]);
+        txExistsProofsPos.push(state.proofPosTxExists[idx]);
+        intermediateRoots.push(state.intermediateRoot[idx]);
+        sendersExistsProof.push(state.proofTxDetails[idx].senderProof);
+        sendersExistsProofPos.push(state.proofTxDetails[idx].senderProofPos);
+        sendersPukeyX.push(state.proofTxDetails[idx].senderPubkeyX);
+        sendersPukeyY.push(state.proofTxDetails[idx].senderPubkeyY);
+        sendersNonce.push(state.proofTxDetails[idx].senderNonce);
+        sendersBalance.push(state.proofTxDetails[idx].senderBalance);
+        txsAmount.push(state.proofTxDetails[idx].amount);
+        txsR8x.push(state.proofTxDetails[idx].R8X);
+        txsR8y.push(state.proofTxDetails[idx].R8Y);
+        txsS.push(state.proofTxDetails[idx].S);
+    }
+
+    return {
+        // public signals
+        withdrawTreeRoot: mimc.F.toString(state.withdrawTree.root),
+        oldAccountRoot: mimc.F.toString(state.accountRootBeforeProcessing),
+        newAccountRoot: mimc.F.toString(state.accountRootAfterProcessing),
+
+        // private signals
+        intermediateRoots,
+        sendersPukeyX,
+        sendersPukeyY,
+        sendersNonce,
+        sendersBalance,
+        txsAmount,
+        txsR8x,
+        txsR8y,
+        txsS,
+        sendersExistsProof,
+        sendersExistsProofPos,
+        txExistsProofs,
+        txExistsProofsPos,
+    }
+}
+
+exports.getDepositExistenceInputCircuit = function (state, mimc) {
+
 }
 
 exports.getDepositExistenceInputCircuit = function (processState) {

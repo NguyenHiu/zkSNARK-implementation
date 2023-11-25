@@ -112,7 +112,7 @@ module.exports = class AccountTree extends Tree {
                 console.log(`index ${i} has wrong signature`);
             }
             newAccount.push(new Account(
-                accountIndexFrom+i, txDepositTree.txs[i].toX,
+                accountIndexFrom + i, txDepositTree.txs[i].toX,
                 txDepositTree.txs[i].toY,
                 txDepositTree.txs[i].amount,
                 txDepositTree.txs[i].nonce, mimc));
@@ -161,7 +161,7 @@ module.exports = class AccountTree extends Tree {
             proof: proof,
             proofPos: proofPos,
             oldAccountRoot: oldAccountRoot,
-            intermediateRoot:  intermediateRoot,
+            intermediateRoot: intermediateRoot,
             txDepositTree: txDepositTree
         }
     }
@@ -234,6 +234,65 @@ module.exports = class AccountTree extends Tree {
             receiverNonce: r_nonce,
             receiverBalance: r_balance,
         };
+    }
+
+    // assume: we store withdraw transactions and their recipients in separate structure
+    //          (or we need to define another structure to store transaction & recipient together)
+    //          --> withdraw transactions are stored like other types of transaction (deposit, transfer) 
+    //                                                                                  with the transaction tree
+    //          --> recipients are stored in an array, where the index of each recipient corresponds to the index of
+    //                                              its associated withdraw transaction in the leaf nodes of 
+    //                                                        the withdraw tree 
+    processWithdrawTree(withdrawTree) {
+        accountRootBeforeProcessing = this.root;
+        intermediateRoot = []
+        proofTxExists = []
+        proofPosTxExists = []
+        proofTxDetails = []
+        for (idx = 0; idx < withdrawTree.txs.length; ++idx) {
+            const { proof, path } = withdrawTree.getProof(idx);
+            proofTxExists.push(proof);
+            proofPosTxExists.push(path);
+            proofTxDetails.push(this.#processWithdrawTx(withdrawTree.txs[idx]));
+            intermediateRoot.push(this.root);
+        }
+        return {
+            accountRootBeforeProcessing,
+            accountRootAfterProcessing: this.root,
+            intermediateRoot,
+            proofTxExists,
+            proofPosTxExists,
+            proofTxDetails,
+            withdrawTree: withdrawTree,
+        }
+    }
+
+    #processWithdrawTx(withdrawTx, mimcjs) {
+        // sender exists
+        accountIndex = existAccount(withdrawTx.fromX, withdrawTx.fromY, mimcjs);
+        if (accountIndex == -1) {
+            console.log("[WithdrawTx] Account does not exist");
+            return;
+        }
+        proof = getProof(accountIndex);
+        account = this.accounts[accountIndex];
+        originalBalance = account.balance;
+        account.acceptSendTx();
+        this.leafNodes[accountIndex] = account.hash;
+        this.rehashingTree(accountIndex, proof.proof, proof.proofPos);
+
+        return {
+            senderProof: proof.proof,
+            senderProofPos: proof.proofPos,
+            senderPubkeyX: withdrawTx.fromX,
+            senderPubkeyY: withdrawTx.fromY,
+            senderNonce: account.nonce - 1, // get original nonce
+            senderBalance: originalBalance, // get original balance
+            amount: withdrawTx.amount,
+            R8X: withdrawTx.r8x,
+            R8Y: withdrawTx.r8y,
+            S: withdrawTx.s,
+        }
     }
 
     findAccountByPubkey(x, y) {
