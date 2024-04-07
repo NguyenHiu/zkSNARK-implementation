@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BUILD_DIR=../../build/circuits/deposit_register_verifier
+BUILD_DIR=../../build/circuits/deposit_register_verifier/test
 CIRCUIT_NAME=deposit_register_verifier
 INPUT_DIR=../../build/inputs
 INPUT_FILE=1_test_deposit_register_proof.json
@@ -12,7 +12,7 @@ fi
 
 # echo "****COMPILING CIRCUIT****"
 # start=`date +%s`
-# circom "$CIRCUIT_NAME".circom --r1cs --wasm --sym --c --wat --output "$BUILD_DIR"
+circom "$CIRCUIT_NAME".circom --r1cs --wasm --sym --c --wat --output "$BUILD_DIR"
 # end=`date +%s`
 # echo "DONE ($((end-start))s)"
 
